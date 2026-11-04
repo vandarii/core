@@ -73,6 +73,8 @@ export interface SessionSideStatus {
   roomC: number | null
   roomSource: 'external' | 'pod' | null
   humidity: number | null
+  /** Null when the sensors can't say */
+  present: boolean | null
   absentSince: number | null
   lastDecision: SessionDecision | null
   lastSession: SleepSession | null
@@ -313,6 +315,7 @@ export class SleepSessionManager {
       roomC: room.roomC === null ? null : Math.round(room.roomC * 10) / 10,
       roomSource: room.source,
       humidity: room.humidity,
+      present: this.deps.readPresence(side),
       absentSince: session ? getAbsentSince(side, now) : null,
       lastDecision,
       lastSession,

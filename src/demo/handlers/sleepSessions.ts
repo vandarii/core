@@ -74,6 +74,7 @@ const status = (side: Side): Output['getStatus']['left'] => {
     roomC: ROOM_C,
     roomSource: 'pod',
     humidity: 46,
+    present: session ? true : false,
     absentSince: null,
     lastDecision,
     lastSession,

@@ -49,6 +49,7 @@ const statusSchema = z.object({
   roomC: z.number().nullable(),
   roomSource: z.enum(['external', 'pod']).nullable(),
   humidity: z.number().nullable(),
+  present: z.boolean().nullable(),
   absentSince: z.number().nullable(),
   lastDecision: decisionSchema.nullable(),
   lastSession: sessionSchema.nullable(),

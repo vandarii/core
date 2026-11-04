@@ -265,6 +265,13 @@ describe('SleepSessionManager', () => {
       expect(store.getSession(session.id)?.endedAt).toBeNull()
     })
 
+    it('reports presence in the status, including when it is unknown', () => {
+      const manager = managerWith(null)
+      expect(manager.getSideStatus('right').present).toBeNull()
+      presence.right = true
+      expect(manager.getSideStatus('right').present).toBe(true)
+    })
+
     it('ends at the maximum length', async () => {
       enable({ maxSessionHours: 2 })
       const manager = managerWith(null)
