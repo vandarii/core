@@ -189,6 +189,7 @@ export const deviceRouter = router({
         temperatureC: z.number().nullable(),
         humidity: z.number().nullable(),
         timestamp: z.number().nullable(),
+        source: z.string().nullable(),
       }),
       waterLevelRaw: z.object({
         raw: z.number().nullable(),

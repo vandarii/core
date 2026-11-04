@@ -473,6 +473,7 @@ const expectedTables: Record<string, TableSpec> = {
     columns: [
       { name: 'timestamp', notNull: true, default: 'fn' },
       { name: 'temperature_c', notNull: true, default: undefined },
+      { name: 'source', notNull: false, default: undefined },
     ],
     indexes: [],
   },

@@ -165,10 +165,10 @@ export const sleepSessionsRouter = router({
   // Pushed by a trusted room sensor, such as a Home Assistant automation
   reportRoom: publicProcedure
     .meta({ openapi: { method: 'POST', path: '/sleep-sessions/room', protect: false, tags: ['SleepSessions'] } })
-    .input(z.object({ temperatureC: z.number().min(-20).max(70) }).strict())
+    .input(z.object({ temperatureC: z.number().min(-20).max(70), source: z.string().trim().min(1).max(24).optional() }).strict())
     .output(z.object({ success: z.boolean() }))
     .mutation(({ input }) => {
-      getSleepSessionManager().reportRoom(input.temperatureC)
+      getSleepSessionManager().reportRoom(input.temperatureC, input.source ?? null)
       return { success: true }
     }),
 })

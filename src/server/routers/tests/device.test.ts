@@ -401,7 +401,7 @@ describe('device.getStatus', () => {
     // Both queries return [] (no rows). Wifi still populates.
     const result = await caller.getStatus({})
     expect(result.wifiStrength).toBe(50)
-    expect(result.roomClimate).toEqual({ temperatureC: null, humidity: null, timestamp: null })
+    expect(result.roomClimate).toEqual({ temperatureC: null, humidity: null, timestamp: null, source: null })
     expect(result.waterLevelRaw).toEqual({ raw: null, calibratedEmpty: null, calibratedFull: null, timestamp: null })
   })
 
@@ -411,7 +411,7 @@ describe('device.getStatus', () => {
     biometricsState.rowsQueue.push([])
 
     const result = await caller.getStatus({})
-    expect(result.roomClimate).toEqual({ temperatureC: null, humidity: null, timestamp: null })
+    expect(result.roomClimate).toEqual({ temperatureC: null, humidity: null, timestamp: null, source: null })
   })
 
   it('handles water rows with undefined raw/calibrated/timestamp fields', async () => {
@@ -436,7 +436,7 @@ describe('device.getStatus', () => {
     }])
 
     const result = await caller.getStatus({})
-    expect(result.roomClimate).toEqual({ temperatureC: null, humidity: null, timestamp: null })
+    expect(result.roomClimate).toEqual({ temperatureC: null, humidity: null, timestamp: null, source: null })
     expect(result.waterLevelRaw).toEqual({
       raw: 1234,
       calibratedEmpty: 500,

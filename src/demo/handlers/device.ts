@@ -106,7 +106,7 @@ export function getDemoDeviceStatus(unit: 'F' | 'C' = 'F'): Status {
     snooze: { left: snooze('left'), right: snooze('right') },
     wifiStrength: 78,
     wifiSSID: 'Demo Wi-Fi',
-    roomClimate: { temperatureC: 21.4, humidity: 44, timestamp: Math.floor(now() / 1000) },
+    roomClimate: { temperatureC: 21.4, humidity: 44, timestamp: Math.floor(now() / 1000), source: null },
     waterLevelRaw: { raw: 812, calibratedEmpty: 400, calibratedFull: 900, timestamp: Math.floor(now() / 1000) },
   }
 }

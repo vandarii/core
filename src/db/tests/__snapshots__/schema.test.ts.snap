@@ -1246,6 +1246,7 @@ exports[`complete Drizzle schema contracts > pins every main-database table, col
     "columns": [
       "timestamp | sql:integer | logical:number/SQLiteInteger | not-null | default:auto | primary-key | not-unique | not-autoincrement | enum:none",
       "temperature_c | sql:real | logical:number/SQLiteReal | not-null | default:none | not-primary-key | not-unique | not-autoincrement | enum:none",
+      "source | sql:text | logical:string/SQLiteText | nullable | default:none | not-primary-key | not-unique | not-autoincrement | enum:none",
     ],
     "exportName": "sleepSessionRoomReadings",
     "foreignKeys": [],

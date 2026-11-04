@@ -1,6 +1,8 @@
 import { desc } from 'drizzle-orm'
-import { biometricsDb } from '@/src/db'
+import { biometricsDb, db } from '@/src/db'
 import { bedTemp, waterLevelReadings } from '@/src/db/biometrics-schema'
+import { sleepSessionRoomReadings } from '@/src/db/schema'
+import { AMBIENT_MAX_AGE_SECONDS } from '@/src/sleepSession/curve'
 import { centiDegreesToC, centiDegreesToF, centiPercentToPercent } from '@/src/lib/tempUtils'
 
 export type MattressTempsF = Record<'left' | 'right', number | null>
@@ -39,7 +41,11 @@ export function mattressTempsFromRow(row: MattressRow | undefined): MattressTemp
 
 interface DeviceEnrichment {
   mattressF: MattressTempsF
-  roomClimate: { temperatureC: number | null, humidity: number | null, timestamp: number | null }
+  /**
+   * temperatureC is the named external sensor while it is fresh, else the Pod's own air sensor,
+   * which reads about 4 °C high from the Hub's heat. source is null for the Pod's own sensor.
+   */
+  roomClimate: { temperatureC: number | null, humidity: number | null, timestamp: number | null, source: string | null }
   waterLevelRaw: { raw: number | null, calibratedEmpty: number | null, calibratedFull: number | null, timestamp: number | null }
 }
 
@@ -61,7 +67,7 @@ export function getDeviceEnrichment(): Promise<DeviceEnrichment> {
   state.pending = (async () => {
     const value: DeviceEnrichment = {
       mattressF: NO_MATTRESS,
-      roomClimate: { temperatureC: null, humidity: null, timestamp: null },
+      roomClimate: { temperatureC: null, humidity: null, timestamp: null, source: null },
       waterLevelRaw: { raw: null, calibratedEmpty: null, calibratedFull: null, timestamp: null },
     }
     try {
@@ -72,10 +78,23 @@ export function getDeviceEnrichment(): Promise<DeviceEnrichment> {
           temperatureC: latestBed.ambientTemp === null ? null : centiDegreesToC(latestBed.ambientTemp),
           humidity: latestBed.humidity === null ? null : centiPercentToPercent(latestBed.humidity),
           timestamp: latestBed.timestamp?.getTime() ?? null,
+          source: null,
         }
       }
     }
     catch { /* Return nulls instead of presenting stale readings as current. */ }
+    try {
+      const [external] = await db.select().from(sleepSessionRoomReadings).orderBy(desc(sleepSessionRoomReadings.timestamp)).limit(1)
+      if (external && Date.now() / 1000 - external.timestamp <= AMBIENT_MAX_AGE_SECONDS) {
+        value.roomClimate = {
+          ...value.roomClimate,
+          temperatureC: external.temperatureC,
+          timestamp: external.timestamp * 1000,
+          source: external.source ?? 'External',
+        }
+      }
+    }
+    catch { /* The Pod's own sensor stays as the fallback. */ }
     try {
       const [latestWater] = await biometricsDb.select().from(waterLevelReadings).orderBy(desc(waterLevelReadings.timestamp)).limit(1)
       if (latestWater) {

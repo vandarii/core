@@ -2,7 +2,8 @@
 
 import { Card, InlineError, SectionLabel, Skeleton } from '@/src/components/ds'
 import { AmbientLightChip } from '@/src/components/TempScreen/AmbientLightChip'
-import { formatDisplayTemp, type TempUnit } from '@/src/lib/tempUtils'
+import { roomLabel } from '@/src/lib/roomLabel'
+import { formatDisplayTemp, formatSensorC, type TempUnit } from '@/src/lib/tempUtils'
 import type { Side } from '@/src/providers/SideProvider'
 import { trpc } from '@/src/utils/trpc'
 
@@ -19,17 +20,19 @@ function mean(values: Array<number | null | undefined>): number | null {
 }
 
 /**
- * Room card: inside (ambient) temperature, humidity, and bed air temperature
+ * Room card: room temperature with its source, humidity, and bed air temperature
  * (mean of the side's outer/center/inner surface sensors), with the ambient
  * light reading in the label row.
  *
- * Wires into environment.getLatestBedTemp (values already in `unit`).
+ * Wires into environment.getRoom and environment.getLatestBedTemp (values already in `unit`).
  */
 export const EnvironmentInfoPanel = ({ side, unit = 'F' }: EnvironmentInfoProps) => {
   const { data, isLoading, error } = trpc.environment.getLatestBedTemp.useQuery(
     { unit },
     { refetchInterval: 10_000 },
   )
+
+  const room = trpc.environment.getRoom.useQuery({}, { refetchInterval: 30_000 }).data
 
   if (isLoading) return <Skeleton className="h-[96px]" />
 
@@ -46,7 +49,12 @@ export const EnvironmentInfoPanel = ({ side, unit = 'F' }: EnvironmentInfoProps)
         ? <InlineError className="col-span-full">{`Could not load room climate: ${error.message}`}</InlineError>
         : (
             <>
-              <Reading value={formatDisplayTemp(data?.ambientTemp, unit, { includeUnit: false, nullDisplay: '—' })} label="Inside" />
+              <Reading
+                value={room?.temperatureC != null
+                  ? formatSensorC(room.temperatureC, unit, { includeUnit: false, nullDisplay: '—' })
+                  : formatDisplayTemp(data?.ambientTemp, unit, { includeUnit: false, nullDisplay: '—' })}
+                label={roomLabel(room?.source)}
+              />
               <Reading value={data?.humidity == null ? '—' : `${Math.round(data.humidity)}%`} label="Humidity" />
               <Reading value={formatDisplayTemp(bedAir, unit, { decimals: 1, includeUnit: false, nullDisplay: '—' })} label="Bed air" />
             </>

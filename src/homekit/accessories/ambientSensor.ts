@@ -1,22 +1,15 @@
 /**
- * HomeKit TemperatureSensor accessory bound to the Pod's ambient air sensor.
+ * HomeKit TemperatureSensor accessory for the room: the external sensor while
+ * it is fresh, else the Pod's own air sensor (see getDeviceEnrichment). Exposed
+ * as a generic temperature sensor so Home / automations can react to room
+ * conditions the same way they would to any third-party thermometer.
  *
- * The Pod's bed unit ships an ambient temperature reading alongside the
- * fluid-temperature channels; biometrics modules persist it to
- * bed_temp.ambient_temp (centidegrees C) at roughly 60s cadence. This
- * accessory exposes the latest row as a generic HomeKit temperature
- * sensor so Home / automations can react to room conditions the same
- * way they would to any third-party thermometer.
- *
- * Poll cadence matches the upstream write rate — a faster poll would
- * just return the same row.
+ * Poll cadence matches the Pod's 60s write rate; a faster poll would just
+ * return the same value.
  */
 
 import { Service, Characteristic } from 'hap-nodejs'
-import { desc } from 'drizzle-orm'
-import { biometricsDb } from '@/src/db'
-import { bedTemp } from '@/src/db/biometrics-schema'
-import { centiDegreesToC } from '@/src/lib/tempUtils'
+import { getDeviceEnrichment } from '@/src/hardware/deviceEnrichment'
 
 const POLL_MS = 60_000
 
@@ -30,22 +23,6 @@ export interface AmbientSensorAccessory {
   stop: () => void
 }
 
-async function readAmbientC(): Promise<number | null> {
-  try {
-    const [row] = await biometricsDb
-      .select({ ambientTemp: bedTemp.ambientTemp })
-      .from(bedTemp)
-      .orderBy(desc(bedTemp.timestamp))
-      .limit(1)
-    if (!row || row.ambientTemp == null) return null
-    return centiDegreesToC(row.ambientTemp)
-  }
-  catch (e) {
-    console.warn('[homekit] ambient sensor read failed:', e instanceof Error ? e.message : e)
-    return null
-  }
-}
-
 export function buildAmbientSensor(): AmbientSensorAccessory {
   const service = new Service.TemperatureSensor('Pod ambient', 'ambient')
   let lastC: number = NEUTRAL_C
@@ -54,7 +31,7 @@ export function buildAmbientSensor(): AmbientSensorAccessory {
     .onGet(() => lastC)
 
   const refresh = async (): Promise<void> => {
-    const c = await readAmbientC()
+    const c = (await getDeviceEnrichment()).roomClimate.temperatureC
     if (c == null) return
     lastC = c
     service.updateCharacteristic(Characteristic.CurrentTemperature, c)

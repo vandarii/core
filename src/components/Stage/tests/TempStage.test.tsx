@@ -21,6 +21,7 @@ type SideCardProps = ComponentProps<typeof SideCardComponent>
 const NOW = new Date(2026, 8, 28, 21, 0)
 
 const m = vi.hoisted(() => ({
+  room: undefined as { temperatureC: number | null, source: string | null } | undefined,
   setTemp: vi.fn(),
   setPower: vi.fn(),
   updateSide: vi.fn(),
@@ -75,7 +76,10 @@ vi.mock('@/src/utils/trpc', () => ({
       getSleepRecords: { useQuery: ({ side }: { side: 'left' | 'right' }) => ({ data: m.records[side] }) },
     },
     health: { thermalHistory: { useQuery: () => ({ data: m.history }) } },
-    environment: { getLatestBedTemp: { useQuery: () => ({ data: m.stored }) } },
+    environment: {
+      getLatestBedTemp: { useQuery: () => ({ data: m.stored }) },
+      getRoom: { useQuery: () => ({ data: m.room }) },
+    },
     schedules: { getAll: { useQuery: ({ side }: { side: 'left' | 'right' }) => ({ data: { temperature: m.schedules[side], power: [], alarm: [] }, isLoading: false }) } },
   },
 }))
@@ -143,6 +147,7 @@ beforeEach(() => {
     leftOuterTemp: 22, leftCenterTemp: 23, leftInnerTemp: 24, rightOuterTemp: 30, rightCenterTemp: 31, rightInnerTemp: 32,
   }
   m.stored = undefined
+  m.room = undefined
   m.older = undefined
   m.health = { tone: 'ok', summary: 'healthy' }
   m.phases = null
@@ -551,6 +556,21 @@ describe('TempStage', () => {
     // 90 s later the frames are stale; the 5 s tick notices without a new frame.
     act(() => vi.advanceTimersByTime(95_000))
     expect(zones()[0]).toBe('left-outer:OUTER--')
+  })
+
+  it('names the room sensor, and calls the Pod\'s own reading hub air', async () => {
+    m.room = { temperatureC: 25, source: 'Dyson' }
+    const { unmount } = render(<TempStage onExit={() => {}} />)
+    await act(async () => {})
+    expect(screen.getByTestId('stage-room').textContent).toBe('77°')
+    expect(screen.getByText('Room · Dyson')).toBeTruthy()
+    unmount()
+
+    m.room = { temperatureC: 30, source: null }
+    render(<TempStage onExit={() => {}} />)
+    await act(async () => {})
+    expect(screen.getByTestId('stage-room').textContent).toBe('86°')
+    expect(screen.getByText('Hub air')).toBeTruthy()
   })
 
   it('exposes the label refs to the canvas', async () => {

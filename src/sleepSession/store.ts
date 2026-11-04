@@ -91,10 +91,10 @@ export const createSessionStore = (db: Database) => ({
       .orderBy(asc(sleepSessionDecisions.timestamp), asc(sleepSessionDecisions.id)).all()
   },
 
-  saveRoomReading(temperatureC: number, now: number) {
+  saveRoomReading(temperatureC: number, now: number, source: string | null = null) {
     const timestamp = now - (now % ROOM_BUCKET_SECONDS)
-    db.insert(sleepSessionRoomReadings).values({ timestamp, temperatureC })
-      .onConflictDoUpdate({ target: sleepSessionRoomReadings.timestamp, set: { temperatureC } }).run()
+    db.insert(sleepSessionRoomReadings).values({ timestamp, temperatureC, source })
+      .onConflictDoUpdate({ target: sleepSessionRoomReadings.timestamp, set: { temperatureC, source } }).run()
   },
 
   getLatestRoomC(maxAgeSeconds: number, now: number): number | null {

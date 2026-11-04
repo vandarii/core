@@ -104,6 +104,11 @@ export const environment: DemoHandlers<'environment'> = {
     return times.map(t => freezerRow(t, occupied, input.unit ?? 'F'))
   },
 
+  getRoom: () => {
+    const now = Date.now()
+    return { temperatureC: bedRow(now, 'C').ambientTemp, source: null, timestamp: now }
+  },
+
   getLatestBedTemp: (input) => {
     const t = Math.floor(Date.now() / 1000)
     return { ...bedRow(t * 1000, input.unit ?? 'F'), id: t }

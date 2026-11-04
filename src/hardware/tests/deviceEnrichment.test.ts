@@ -1,10 +1,13 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const dbMock = vi.hoisted(() => ({ query: vi.fn<() => Promise<unknown[]>>() }))
+const dbMock = vi.hoisted(() => ({ query: vi.fn<() => Promise<unknown[]>>(), room: vi.fn<() => Promise<unknown[]>>() }))
 vi.mock('@/src/db', () => ({
   biometricsDb: {
     select: () => ({ from: () => ({ orderBy: () => ({ limit: dbMock.query }) }) }),
+  },
+  db: {
+    select: () => ({ from: () => ({ orderBy: () => ({ limit: dbMock.room }) }) }),
   },
 }))
 
@@ -20,6 +23,7 @@ beforeEach(() => {
   now = 0
   vi.spyOn(performance, 'now').mockImplementation(() => now)
   dbMock.query.mockReset().mockResolvedValue([])
+  dbMock.room.mockReset().mockResolvedValue([])
 })
 
 afterEach(() => {
@@ -42,7 +46,7 @@ describe('device enrichment cache', () => {
     now = 500
     release([climate])
     const [first] = await Promise.all(pending)
-    expect(first.roomClimate).toEqual({ temperatureC: 21.5, humidity: 45, timestamp: timestamp.getTime() })
+    expect(first.roomClimate).toEqual({ temperatureC: 21.5, humidity: 45, timestamp: timestamp.getTime(), source: null })
     expect(first.waterLevelRaw).toEqual({ ...water, timestamp: timestamp.getTime() })
 
     now = 2_499
@@ -87,6 +91,26 @@ describe('device enrichment cache', () => {
     expect(mattressTempsFromRow(undefined)).toEqual({ left: null, right: null })
   })
 
+  it('prefers a fresh external room reading and keeps the Pod humidity', async () => {
+    const nowS = Math.floor(Date.now() / 1000)
+    dbMock.query.mockResolvedValueOnce([climate]).mockResolvedValueOnce([water])
+    dbMock.room.mockResolvedValueOnce([{ timestamp: nowS - 60, temperatureC: 25.6, source: 'Dyson' }])
+
+    expect((await getDeviceEnrichment()).roomClimate).toEqual({ temperatureC: 25.6, humidity: 45, timestamp: (nowS - 60) * 1000, source: 'Dyson' })
+  })
+
+  it('falls back to the Pod sensor when the external reading is stale or unavailable', async () => {
+    const nowS = Math.floor(Date.now() / 1000)
+    dbMock.query.mockResolvedValueOnce([climate]).mockResolvedValueOnce([water])
+    dbMock.room.mockResolvedValueOnce([{ timestamp: nowS - 16 * 60, temperatureC: 25.6, source: 'Dyson' }])
+    expect((await getDeviceEnrichment()).roomClimate).toMatchObject({ temperatureC: 21.5, source: null })
+
+    now = 2_000
+    dbMock.query.mockResolvedValueOnce([climate]).mockResolvedValueOnce([water])
+    dbMock.room.mockRejectedValueOnce(new Error('database unavailable'))
+    expect((await getDeviceEnrichment()).roomClimate).toMatchObject({ temperatureC: 21.5, source: null })
+  })
+
   it('replaces expired readings with nulls when both queries fail', async () => {
     dbMock.query.mockResolvedValueOnce([climate]).mockResolvedValueOnce([water])
     await getDeviceEnrichment()
@@ -95,7 +119,7 @@ describe('device enrichment cache', () => {
 
     expect(await getDeviceEnrichment()).toEqual({
       mattressF: { left: null, right: null },
-      roomClimate: { temperatureC: null, humidity: null, timestamp: null },
+      roomClimate: { temperatureC: null, humidity: null, timestamp: null, source: null },
       waterLevelRaw: { raw: null, calibratedEmpty: null, calibratedFull: null, timestamp: null },
     })
   })

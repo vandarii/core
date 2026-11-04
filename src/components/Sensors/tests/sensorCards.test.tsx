@@ -26,7 +26,7 @@ vi.mock('@/src/utils/trpc', () => {
     return { data: mock.data[key], dataUpdatedAt: Date.now(), isLoading: mock.loading, isError: !!mock.error, error: mock.error }
   } })
   return { trpc: {
-    environment: { getLatestBedTemp: query('bed'), getLatestFreezerTemp: query('freezer'), getLatestAmbientLight: query('light') },
+    environment: { getRoom: query('room'), getLatestBedTemp: query('bed'), getLatestFreezerTemp: query('freezer'), getLatestAmbientLight: query('light') },
     waterLevel: { getLatest: query('water'), getFlowReadings: query('flow'), getLatestFlowReading: query('latestFlow') }, biometrics: { getOccupancy: query('occupancy') },
   } }
 })

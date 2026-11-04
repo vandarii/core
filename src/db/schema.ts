@@ -452,6 +452,7 @@ export const sleepSessionSettings = sqliteTable('sleep_session_settings', {
 export const sleepSessionRoomReadings = sqliteTable('sleep_session_room_readings', {
   timestamp: integer('timestamp').primaryKey(), // unix seconds, start of the bucket
   temperatureC: real('temperature_c').notNull(),
+  source: text('source'), // Sensor name shown to the user, such as "Dyson"
 })
 
 // ============================================================================

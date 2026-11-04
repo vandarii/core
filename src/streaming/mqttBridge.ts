@@ -25,6 +25,7 @@
  *   <prefix>/<device-id>/cmd/set-alarm               — JSON {side, vibrationIntensity, vibrationPattern, duration}
  *   <prefix>/<device-id>/cmd/clear-alarm             — JSON {side}
  *   <prefix>/<device-id>/cmd/start-priming           — JSON {} (or empty payload)
+ *   <prefix>/<device-id>/cmd/report-room             — JSON {temperatureC, source?} from a trusted room sensor
  *
  * Commands route through the existing tRPC procedures via createCaller, so the
  * Zod input schemas are the single source of truth for argument validation —
@@ -719,6 +720,9 @@ async function handleCommand(verb: string, payload: CommandPayload): Promise<voi
       return
     case 'start-priming':
       await caller.device.startPriming({})
+      return
+    case 'report-room':
+      await caller.sleepSessions.reportRoom(payload as never)
       return
     default:
       console.warn(`[mqtt] unknown command verb: ${verb}`)

@@ -25,6 +25,7 @@ import { usePrefs } from '@/src/providers/PrefsProvider'
 import { useTimeFormat } from '@/src/providers/TimeFormatProvider'
 import { useSide } from '@/src/providers/SideProvider'
 import { trpc } from '@/src/utils/trpc'
+import { roomLabel } from '@/src/lib/roomLabel'
 import StageCanvas from './StageCanvas'
 import type { StageCanvasHandle, StageMode } from './StageCanvas'
 import { SideLabel, ZoneLabel } from './StageLabels'
@@ -72,10 +73,12 @@ function useBedSurface() {
   const stale = reading === null || nowS - reading.ts >= THERMAL_STALE_SECONDS
   const frames = [older, newer].filter((f): f is NonNullable<typeof f> => !!f).sort((a, b) => b.ts - a.ts)
   const room = frames[0] ?? stored.data ?? null
+  const measuredRoom = trpc.environment.getRoom.useQuery({}, { refetchInterval: 30_000 }).data
   return {
     zonesC: { left: stale ? EMPTY : reading.left, right: stale ? EMPTY : reading.right },
     stale,
-    ambientC: room?.ambientTemp ?? null,
+    ambientC: measuredRoom?.temperatureC ?? room?.ambientTemp ?? null,
+    roomSource: measuredRoom?.source ?? null,
     humidity: room?.humidity ?? null,
     ts: reading?.ts ?? null,
   }
@@ -411,7 +414,7 @@ export function TempStage({ onExit }: { onExit: () => void }) {
 
       {/* Room readouts, top right, once there is room beside the centred pills. */}
       <div className="absolute right-7 top-6 z-10 hidden gap-7 rounded-xl border px-[18px] py-3 min-[1200px]:flex" style={{ ...GLASS, borderColor: STAGE.line }}>
-        <Readout label="Room" value={roomText} testId="stage-room" />
+        <Readout label={roomLabel(surface.roomSource)} value={roomText} testId="stage-room" />
         <Readout label="Humidity" value={humidityText} testId="stage-humidity" />
         <Readout label="Bed air" value={bedAirText} testId="stage-bed-air" />
       </div>

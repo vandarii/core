@@ -168,6 +168,7 @@ vi.mock('@/src/db', () => ({
 
 // Hoisted device caller mock — lifecycle tests assert that messages route to
 // the right tRPC procedure based on the topic verb.
+const sleepSessionsMock = vi.hoisted(() => ({ reportRoom: vi.fn(async () => ({ success: true })) }))
 const deviceMock = vi.hoisted(() => ({
   setTemperature: vi.fn(async () => undefined),
   setPower: vi.fn(async () => undefined),
@@ -180,7 +181,7 @@ const deviceMock = vi.hoisted(() => ({
 // resolve at module load. Lifecycle tests below additionally exercise command
 // dispatch and so need real-looking spies.
 vi.mock('@/src/server/routers/app', () => ({
-  appRouter: { createCaller: () => ({ device: deviceMock }) },
+  appRouter: { createCaller: () => ({ device: deviceMock, sleepSessions: sleepSessionsMock }) },
 }))
 
 // Hoisted onServerFrame mock — lifecycle tests need to capture the frame
@@ -1032,6 +1033,18 @@ describe('mqttBridge — message dispatch', () => {
 
     fake.emit('message', `sleepypod/${id}/cmd/start-priming`, Buffer.from(''))
     await vi.waitFor(() => expect(deviceMock.startPriming).toHaveBeenCalledWith({}))
+
+    await shutdownMqttBridge()
+  })
+
+  it('routes report-room to the room reading procedure', async () => {
+    const fake = await startBridgeWithFake()
+    fake.connected = true
+    fake.emit('connect')
+
+    const reading = { temperatureC: 25.6, source: 'Dyson' }
+    fake.emit('message', `sleepypod/${deviceId()}/cmd/report-room`, Buffer.from(JSON.stringify(reading)))
+    await vi.waitFor(() => expect(sleepSessionsMock.reportRoom).toHaveBeenCalledWith(reading))
 
     await shutdownMqttBridge()
   })

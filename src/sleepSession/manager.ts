@@ -333,7 +333,7 @@ export class SleepSessionManager {
     return parsed
   }
 
-  reportRoom(temperatureC: number) {
-    this.store.saveRoomReading(temperatureC, this.deps.now())
+  reportRoom(temperatureC: number, source: string | null = null) {
+    this.store.saveRoomReading(temperatureC, this.deps.now(), source)
   }
 }

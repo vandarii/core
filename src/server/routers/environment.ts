@@ -5,6 +5,7 @@ import { biometricsDb } from '@/src/db'
 import { ambientLight, bedTemp, freezerTemp } from '@/src/db/biometrics-schema'
 import { and, gte, lte, desc, avg, min, max, count } from 'drizzle-orm'
 import { validateDateRange } from '@/src/server/validation-schemas'
+import { getDeviceEnrichment } from '@/src/hardware/deviceEnrichment'
 import { centiDegreesToC, centiDegreesToF, centiPercentToPercent, type TempUnit } from '@/src/lib/tempUtils'
 
 function convertTemp(centidegrees: number | null, unit: TempUnit): number | null {
@@ -125,6 +126,20 @@ export const environmentRouter = router({
           cause: error,
         })
       }
+    }),
+
+  /** The room temperature to show: a fresh external sensor, else the Pod's own (source null). */
+  getRoom: publicProcedure
+    .meta({ openapi: { method: 'GET', path: '/environment/room', protect: false, tags: ['Environment'] } })
+    .input(z.object({}).strict())
+    .output(z.object({
+      temperatureC: z.number().nullable(),
+      source: z.string().nullable(),
+      timestamp: z.number().nullable(),
+    }))
+    .query(async () => {
+      const { temperatureC, source, timestamp } = (await getDeviceEnrichment()).roomClimate
+      return { temperatureC, source, timestamp }
     }),
 
   getLatestBedTemp: publicProcedure
