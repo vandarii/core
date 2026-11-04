@@ -9,6 +9,7 @@ let movementRows: MovementRow[] = []
 let calRows: CalRow[] = []
 let vitalsRows: VitalsRow[] = []
 let snapshot: LatestCapSenseSnapshot | null = null
+let detected: boolean | null = null
 
 const drizzle = vi.hoisted(() => ({
   and: vi.fn((...conditions: unknown[]) => ({ op: 'and', conditions })),
@@ -19,6 +20,7 @@ const drizzle = vi.hoisted(() => ({
 }))
 
 vi.mock('drizzle-orm', () => drizzle)
+vi.mock('@/src/sleepSession/detectorPresence', () => ({ readDetectorPresence: () => detected }))
 
 const movementAll = vi.fn<() => MovementRow[]>(() => movementRows)
 const calAll = vi.fn<() => CalRow[]>(() => calRows)
@@ -79,8 +81,34 @@ function makeFrame(side: 'left' | 'right', values: number[]): LatestCapSenseSnap
   }
 }
 
+describe('getOccupancy on capSense Pods', () => {
+  beforeEach(() => {
+    detected = null
+    movementRows = [{ peak: 1000 }]
+    calRows = []
+    vitalsRows = []
+    snapshot = null
+  })
+
+  it('trusts the sleep detector over lingering movement', () => {
+    detected = false
+    expect(getOccupancy('left')).toMatchObject({ occupied: false, available: true, classification: 'none' })
+  })
+
+  it('reads a still person the detector can see', () => {
+    detected = true
+    movementRows = [{ peak: 0 }]
+    expect(getOccupancy('left')).toMatchObject({ occupied: true, available: true, classification: 'person' })
+  })
+
+  it('stays unavailable when the detector can\'t say', () => {
+    expect(getOccupancy('left')).toMatchObject({ occupied: true, available: false })
+  })
+})
+
 describe('getOccupancy', () => {
   beforeEach(() => {
+    detected = null
     vi.useFakeTimers()
     vi.setSystemTime(new Date(FIXED_NOW))
     movementRows = []

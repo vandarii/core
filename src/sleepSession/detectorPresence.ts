@@ -1,4 +1,4 @@
-// Presence from the sleep-detector module, for Pods that send capSense frames.
+// Presence from the sleep-detector module, used by getOccupancy on Pods that send capSense frames.
 // getOccupancy only scores capSense2, so on those Pods it is never available. The detector
 // already scores capSense with debounce, hysteresis and drift tracking, and saves the result.
 import { readFileSync } from 'node:fs'

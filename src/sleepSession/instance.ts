@@ -6,7 +6,6 @@ import { deviceSettings, sideSettings } from '@/src/db/schema'
 import { withSideLock } from '@/src/hardware/sideLock'
 import { getOccupancy } from '@/src/lib/occupancy'
 import { AMBIENT_MAX_AGE_SECONDS } from './curve'
-import { readDetectorPresence } from './detectorPresence'
 import { SleepSessionManager } from './manager'
 import { createSessionStore } from './store'
 import type { Side } from './types'
@@ -26,8 +25,7 @@ const readPodRoom = (now: number) => {
 
 const readPresence = (side: Side) => {
   const occupancy = getOccupancy(side)
-  if (occupancy.available) return occupancy.classification === 'person'
-  return readDetectorPresence(side, Math.floor(Date.now() / 1000))
+  return occupancy.available ? occupancy.classification === 'person' : null
 }
 
 const globalState = globalThis as typeof globalThis & {

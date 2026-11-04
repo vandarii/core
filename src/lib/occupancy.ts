@@ -32,6 +32,7 @@ import { biometricsDb } from '@/src/db/biometrics'
 import { calibrationProfiles, movement, vitals } from '@/src/db/biometrics-schema'
 import { getLatestCapSenseSnapshot } from '@/src/streaming/piezoStream'
 import { RESTLESS_SCORE_MIN } from '@/src/lib/movement'
+import { readDetectorPresence } from '@/src/sleepSession/detectorPresence'
 import type { Side } from '@/src/hardware/types'
 
 const MOVEMENT_WINDOW_MS = 15 * 60_000
@@ -122,14 +123,17 @@ export function getOccupancy(side: Side): OccupancyResult {
   const movementSignal = readMovementSignal(side)
   const levelSignal = readLevelSignal(side)
   const vitalsSignal = readVitalsSignal(side)
-  const occupied = movementSignal.active || levelSignal.active
+  // capSense Pods have no level signal here, but the sleep detector scores those frames
+  // itself. Its answer wins over recent movement, which lingers after someone gets up.
+  const detected = levelSignal.deviation === null ? readDetectorPresence(side, Math.floor(Date.now() / 1000)) : null
+  const occupied = detected ?? (movementSignal.active || levelSignal.active)
   return {
     occupied,
     movement: movementSignal,
     level: levelSignal,
     vitals: vitalsSignal,
     classification: classify(occupied, levelSignal, vitalsSignal),
-    available: levelSignal.deviation !== null,
+    available: levelSignal.deviation !== null || detected !== null,
   }
 }
 
