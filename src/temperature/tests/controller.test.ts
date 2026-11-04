@@ -99,6 +99,33 @@ describe('temperature arbitration', () => {
     expect(h.apply).toHaveBeenLastCalledWith('left', 66)
   })
 
+  it('powers on to the side\'s preset only when nothing else sets the temperature', async () => {
+    const h = harness()
+    h.deps.powerOnTemperature = () => 81
+    h.powered.left = false
+    h.baselines.left = []
+    await withSideLock('left', () => h.controller.powerOnLocked('left'))
+    expect(h.apply).toHaveBeenLastCalledWith('left', 81)
+
+    // A schedule's own on-temperature and a running owner both outrank the preset.
+    await h.controller.powerOffLocked('left')
+    await withSideLock('left', () => h.controller.powerOnLocked('left', 70))
+    expect(h.apply).toHaveBeenLastCalledWith('left', 70)
+    await h.controller.powerOffLocked('left')
+    h.baselines.left.push(request('run-once', 69))
+    await withSideLock('left', () => h.controller.powerOnLocked('left'))
+    expect(h.apply).toHaveBeenLastCalledWith('left', 69)
+  })
+
+  it('falls back to 75°F with no preset', async () => {
+    const h = harness()
+    h.deps.powerOnTemperature = () => null
+    h.powered.left = false
+    h.baselines.left = []
+    await withSideLock('left', () => h.controller.powerOnLocked('left'))
+    expect(h.apply).toHaveBeenLastCalledWith('left', 75)
+  })
+
   it('retains evolving lower-priority targets throughout a manual hold', async () => {
     const h = harness()
     await h.controller.setManual('left', 75)

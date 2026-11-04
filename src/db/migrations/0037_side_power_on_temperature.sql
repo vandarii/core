@@ -1,0 +1,1 @@
+ALTER TABLE `side_settings` ADD `power_on_temperature` real;

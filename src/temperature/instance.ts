@@ -12,6 +12,7 @@ import { activeSleeperSides, scheduleSourceSide, type BedConfiguration } from '@
 import { broadcastMutationStatus } from '@/src/streaming/broadcastMutationStatus'
 import { alarmTemperatureTargets, recurringTarget, sessionTarget, type AlarmOccurrenceCache, type RecurringOccurrenceCache, type WeeklyTarget } from './baseline'
 import { TemperatureController, type TemperatureRequest } from './controller'
+import { readPowerOnTemperature } from './powerOnTemperature'
 
 const invalidSessions: Record<Side, Map<number, string>> = { left: new Map(), right: new Map() }
 
@@ -154,6 +155,7 @@ export function getTemperatureController(): TemperatureController {
         db.insert(deviceState).values({ side, hardwareDeadline }).onConflictDoUpdate({ target: deviceState.side, set: { hardwareDeadline } }).run()
       },
       isBlocked: shouldBlock,
+      powerOnTemperature: readPowerOnTemperature,
       connect: () => getSharedHardwareClient().connect(),
       apply: async (side, temperature, durationSec) => {
         markSideMutated(side)

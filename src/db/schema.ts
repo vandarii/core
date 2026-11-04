@@ -94,6 +94,8 @@ export const sideSettings = sqliteTable('side_settings', {
   alwaysOn: integer('always_on', { mode: 'boolean' }).notNull().default(false),
   autoOffEnabled: integer('auto_off_enabled', { mode: 'boolean' }).notNull().default(false),
   autoOffMinutes: integer('auto_off_minutes').notNull().default(30),
+  // °F chosen on the dial while the side is off; null uses the default.
+  powerOnTemperature: real('power_on_temperature'),
   // Experimental: power the side on once a person has been in bed for
   // auto_on_minutes, inside the auto_on_start..auto_on_end local-time window
   // (wraps midnight; equal times mean any time). See services/autoOnWatcher.

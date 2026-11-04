@@ -16,7 +16,7 @@ import { getDacMonitorIfRunning } from '@/src/hardware/dacMonitor.instance'
 import { broadcastFrame } from './piezoStream'
 import { getPrimeCompletedAt } from '@/src/hardware/primeNotification'
 import { getAllPumpStallNotices } from '@/src/hardware/pumpStallNotification'
-import { peekMattressTempsF } from '@/src/hardware/deviceEnrichment'
+import { peekSideReadings } from '@/src/hardware/deviceEnrichment'
 import { getAlarmState } from '@/src/hardware/deviceStateSync'
 import { getSnoozeStatus } from '@/src/hardware/snoozeManager'
 import { applyMutationOverlay, recordMutationOverlay } from './mutationOverlay'
@@ -35,9 +35,8 @@ export function broadcastMutationStatus(
     const primeCompletedAt = getPrimeCompletedAt()
     const alarmState = getAlarmState()
     const stallNotices = getAllPumpStallNotices()
-    const mattressF = peekMattressTempsF()
-    const leftSide = { ...applyMutationOverlay('left', { ...lastStatus.leftSide }), mattressTemperature: mattressF.left, isAlarmVibrating: alarmState.left }
-    const rightSide = { ...applyMutationOverlay('right', { ...lastStatus.rightSide }), mattressTemperature: mattressF.right, isAlarmVibrating: alarmState.right }
+    const leftSide = { ...applyMutationOverlay('left', { ...lastStatus.leftSide }), ...peekSideReadings('left'), isAlarmVibrating: alarmState.left }
+    const rightSide = { ...applyMutationOverlay('right', { ...lastStatus.rightSide }), ...peekSideReadings('right'), isAlarmVibrating: alarmState.right }
 
     if (side && sideOverlay) {
       if (side === 'left') Object.assign(leftSide, sideOverlay)

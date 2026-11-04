@@ -157,6 +157,7 @@ export function StagePanel({
                   waterF={waterF}
                   unit={unit}
                   power={isOn}
+                  adjustableOff={!paused}
                   onChange={onPreview}
                   onCommit={onCommit}
                   statusOverride={isOn ? undefined : 'OFF'}

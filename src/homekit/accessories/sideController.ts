@@ -27,6 +27,8 @@ import { TemperatureBlockedError } from '@/src/temperature/controller'
 import { shouldBlock as pumpStallShouldBlock } from '@/src/hardware/pumpStallGuard'
 import { withSideLock } from '@/src/hardware/sideLock'
 import { getJobManager } from '@/src/scheduler'
+import { notePowerOnTemperature } from '@/src/hardware/deviceEnrichment'
+import { readPowerOnTemperature, savePowerOnTemperature } from '@/src/temperature/powerOnTemperature'
 
 /**
  * Guard denials surface as NOT_ALLOWED_IN_CURRENT_STATE (-70412): hap-nodejs
@@ -149,13 +151,16 @@ export function reconcileIntendedPower(status: DeviceStatus, side: Side): void {
 
 /**
  * Resolve the target setpoint to use when powering a side back on.
- * Cache wins because firmware may not preserve targetTemperature across
+ * A preset set while off wins, shared with the web UI. Then the cache,
+ * because firmware may not preserve targetTemperature across
  * a level=0 (off) write. Falls back to the last firmware status, then to
  * the same non-neutral 75°F default as the web and shared-hardware paths.
  * Falling back to TEMP_NEUTRAL would send level 0 and immediately make
  * HomeKit's AUTO/ON characteristic read back as OFF.
  */
 export function getStagedTargetF(monitor: DacMonitor, side: Side): number {
+  const preset = readPowerOnTemperature(side)
+  if (preset !== null) return preset
   const cached = lastTargetF[side]
   if (cached !== null) return cached
   const status = monitor.getLastStatus()
@@ -195,7 +200,11 @@ export async function setTargetTemperature(
   await withSideLock(side, async () => {
     const intended = intendedPower[side]
     const powered = intended !== null ? intended : isCurrentlyPowered(monitor, side)
-    if (!powered) return
+    if (!powered) {
+      savePowerOnTemperature(side, f)
+      notePowerOnTemperature(side, f)
+      return
+    }
     // Gate only the firmware push: staging a target on an off side is
     // harmless, and the guard trip leaves the intent latch stuck ON
     // (firmware never confirms), so `powered` alone can't be trusted here.

@@ -174,7 +174,6 @@ export function TempStage({ onExit }: { onExit: () => void }) {
     for (const s of targetsFor(side)) controls[s].commitTemp(f)
   }
   const handleStep = (side: StageSide, delta: number) => {
-    if (!controls[side].isOn) return
     const f = stepForDisplay(controls[side].targetF, delta, unit, display)
     for (const s of targetsFor(side)) controls[s].stepTemp(f)
   }
@@ -441,7 +440,7 @@ export function TempStage({ onExit }: { onExit: () => void }) {
                   waterF={c.waterF}
                   isOn={c.isOn}
                   paused={blocked[side]}
-                  stepDisabled={!c.isOn || c.tempPending || blocked[side]}
+                  stepDisabled={c.tempPending || blocked[side]}
                   powerDisabled={c.powerPending || blocked[side]}
                   holdMinutes={holdMinutes}
                   onHoldChange={setHoldMinutes}
@@ -484,7 +483,7 @@ export function TempStage({ onExit }: { onExit: () => void }) {
         targetF={controls[panelSide].targetF}
         bedF={controls[panelSide].bedF}
         waterF={controls[panelSide].waterF}
-        stepDisabled={!controls[panelSide].isOn || controls[panelSide].tempPending || blocked[panelSide]}
+        stepDisabled={controls[panelSide].tempPending || blocked[panelSide]}
         onPreview={f => handlePreview(panelSide, f)}
         onCommit={f => handleCommit(panelSide, f)}
         onStep={delta => handleStep(panelSide, delta)}

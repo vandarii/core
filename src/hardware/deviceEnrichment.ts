@@ -3,6 +3,7 @@ import { biometricsDb, db } from '@/src/db'
 import { bedTemp, waterLevelReadings } from '@/src/db/biometrics-schema'
 import { sleepSessionRoomReadings } from '@/src/db/schema'
 import { AMBIENT_MAX_AGE_SECONDS } from '@/src/sleepSession/curve'
+import { readPowerOnTemperature } from '@/src/temperature/powerOnTemperature'
 import { centiDegreesToC, centiDegreesToF, centiPercentToPercent } from '@/src/lib/tempUtils'
 
 export type MattressTempsF = Record<'left' | 'right', number | null>
@@ -41,6 +42,7 @@ export function mattressTempsFromRow(row: MattressRow | undefined): MattressTemp
 
 interface DeviceEnrichment {
   mattressF: MattressTempsF
+  powerOnF: Record<'left' | 'right', number | null>
   /**
    * temperatureC is the named external sensor while it is fresh, else the Pod's own air sensor,
    * which reads about 4 °C high from the Hub's heat. source is null for the Pod's own sensor.
@@ -67,6 +69,7 @@ export function getDeviceEnrichment(): Promise<DeviceEnrichment> {
   state.pending = (async () => {
     const value: DeviceEnrichment = {
       mattressF: NO_MATTRESS,
+      powerOnF: { left: readPowerOnTemperature('left'), right: readPowerOnTemperature('right') },
       roomClimate: { temperatureC: null, humidity: null, timestamp: null, source: null },
       waterLevelRaw: { raw: null, calibratedEmpty: null, calibratedFull: null, timestamp: null },
     }
@@ -114,7 +117,14 @@ export function getDeviceEnrichment(): Promise<DeviceEnrichment> {
   return state.pending
 }
 
-/** Latest known mattress temperatures for synchronous callers such as WebSocket frames. */
-export function peekMattressTempsF(): MattressTempsF {
-  return globalState.__sp_device_enrichment__?.value?.mattressF ?? NO_MATTRESS
+/** Latest known per-side extras for synchronous callers such as WebSocket frames. */
+export function peekSideReadings(side: 'left' | 'right') {
+  const value = globalState.__sp_device_enrichment__?.value
+  return { mattressTemperature: value?.mattressF[side] ?? null, powerOnTemperature: value?.powerOnF[side] ?? null }
+}
+
+/** Shows a just-saved preset in the next frame instead of waiting out the cache. */
+export function notePowerOnTemperature(side: 'left' | 'right', temperature: number): void {
+  const value = globalState.__sp_device_enrichment__?.value
+  if (value) value.powerOnF = { ...value.powerOnF, [side]: temperature }
 }

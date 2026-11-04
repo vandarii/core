@@ -46,6 +46,8 @@ export interface TemperatureControllerDeps {
   readHardwareDeadline: (side: Side) => number | null
   writeHardwareDeadline: (side: Side, deadline: number | null) => void
   isBlocked: (side: Side) => boolean
+  /** °F the user chose while the side was off; used when nothing else sets the temperature. */
+  powerOnTemperature?: (side: Side) => number | null
   /** Must connect before returning; selection and safety are rechecked afterward. */
   connect: () => Promise<void>
   /** Hardware write + state mirror; the caller already owns the side lock. */
@@ -190,12 +192,12 @@ export class TemperatureController {
   }
 
   /** An explicit power event may energize the selected target, but creates no manual hold. */
-  async powerOnLocked(side: Side, fallback = 75, isCurrent: () => boolean = () => true): Promise<TemperatureControlStatus> {
+  async powerOnLocked(side: Side, fallback?: number, isCurrent: () => boolean = () => true): Promise<TemperatureControlStatus> {
     await this.deps.connect()
     if (this.deps.isBlocked(side)) throw new TemperatureBlockedError()
     if (!isCurrent()) return this.status(side)
     const selected = this.select(side, this.deps.now())
-    const temperature = selected?.temperature ?? fallback
+    const temperature = selected?.temperature ?? fallback ?? this.deps.powerOnTemperature?.(side) ?? 75
     if (!Number.isFinite(temperature) || temperature < MIN_TEMP || temperature > MAX_TEMP) {
       throw new Error('Temperature outside hardware bounds')
     }

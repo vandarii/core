@@ -23,7 +23,7 @@ import { DacMonitor } from './dacMonitor'
 import { GestureActionHandler } from './gestureActionHandler'
 import { GestureDispatcher, tapGestureEvent } from './gestureDispatch'
 import { defaultGestureActionDeps } from './gestureActionHandler.deps'
-import { getDeviceEnrichment, peekMattressTempsF } from './deviceEnrichment'
+import { getDeviceEnrichment, peekSideReadings } from './deviceEnrichment'
 import { DeviceStateSync, getAlarmState } from './deviceStateSync'
 import { trackPrimingState, resetPrimingState, getPrimeCompletedAt } from './primeNotification'
 import { PumpLogRecorder } from './pumpLogRecorder'
@@ -120,7 +120,6 @@ export const getDacMonitor = async (): Promise<DacMonitor> => {
         import('../streaming/piezoStream').then(({ broadcastFrame }) => {
           const primeCompletedAt = getPrimeCompletedAt()
           const alarmState = getAlarmState()
-          const mattressF = peekMattressTempsF()
           const stallNotices = getAllPumpStallNotices()
           broadcastFrame({
             type: 'deviceStatus',
@@ -128,8 +127,8 @@ export const getDacMonitor = async (): Promise<DacMonitor> => {
             ts: Date.now(),
             // A poll can still report the pre-command target right after a
             // mutation; keep the mutation's target until the firmware agrees.
-            leftSide: { ...applyMutationOverlay('left', { ...status.leftSide }), mattressTemperature: mattressF.left, isAlarmVibrating: alarmState.left },
-            rightSide: { ...applyMutationOverlay('right', { ...status.rightSide }), mattressTemperature: mattressF.right, isAlarmVibrating: alarmState.right },
+            leftSide: { ...applyMutationOverlay('left', { ...status.leftSide }), ...peekSideReadings('left'), isAlarmVibrating: alarmState.left },
+            rightSide: { ...applyMutationOverlay('right', { ...status.rightSide }), ...peekSideReadings('right'), isAlarmVibrating: alarmState.right },
             waterLevel: status.waterLevel,
             isPriming: status.isPriming,
             ...(primeCompletedAt && { primeCompletedNotification: { timestamp: primeCompletedAt } }),

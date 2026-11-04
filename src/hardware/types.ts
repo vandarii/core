@@ -99,6 +99,8 @@ export interface SideStatus {
   targetTemperature: number | null // °F, or null when the level is 0 (off/neutral)
   /** °F, mean of the side's surface sensors; null when missing or stale. Added after parsing. */
   mattressTemperature?: number | null
+  /** °F chosen while off; the side goes here when turned on. Added after parsing. */
+  powerOnTemperature?: number | null
   currentLevel: number // -100 to 100
   targetLevel: number // -100 to 100
   heatingDuration: number // In seconds

@@ -25,7 +25,9 @@ import {
   alarmDurationSchema,
 } from '@/src/server/validation-schemas'
 import { toC } from '@/src/lib/tempUtils'
-import { getDeviceEnrichment } from '@/src/hardware/deviceEnrichment'
+import { getDeviceEnrichment, notePowerOnTemperature } from '@/src/hardware/deviceEnrichment'
+import { broadcastMutationStatus } from '@/src/streaming/broadcastMutationStatus'
+import { readPowerOnTemperature, savePowerOnTemperature } from '@/src/temperature/powerOnTemperature'
 import { getWifiInfo } from '@/src/hardware/wifi'
 import { getDacMonitorIfRunning } from '@/src/hardware/dacMonitor.instance'
 
@@ -134,6 +136,7 @@ export const deviceRouter = router({
       leftSide: z.object({
         currentTemperature: z.number().nullable(),
         mattressTemperature: z.number().nullable(),
+        powerOnTemperature: z.number().nullable(),
         targetTemperature: z.number().nullable(),
         currentLevel: z.number(),
         targetLevel: z.number(),
@@ -143,6 +146,7 @@ export const deviceRouter = router({
       rightSide: z.object({
         currentTemperature: z.number().nullable(),
         mattressTemperature: z.number().nullable(),
+        powerOnTemperature: z.number().nullable(),
         targetTemperature: z.number().nullable(),
         currentLevel: z.number(),
         targetLevel: z.number(),
@@ -245,7 +249,7 @@ export const deviceRouter = router({
         ({ wifiStrength, wifiSSID } = getWifiInfo())
       }
       catch { /* Wi-Fi diagnostics must not prevent hardware status reads. */ }
-      const { mattressF, roomClimate, waterLevelRaw } = await getDeviceEnrichment()
+      const { mattressF, powerOnF, roomClimate, waterLevelRaw } = await getDeviceEnrichment()
 
       return {
         ...status,
@@ -254,12 +258,14 @@ export const deviceRouter = router({
           ...status.leftSide,
           currentTemperature: convertTemp(status.leftSide.currentTemperature),
           mattressTemperature: convertTemp(mattressF.left),
+          powerOnTemperature: convertTemp(powerOnF.left),
           targetTemperature: convertTemp(status.leftSide.targetTemperature),
         },
         rightSide: {
           ...status.rightSide,
           currentTemperature: convertTemp(status.rightSide.currentTemperature),
           mattressTemperature: convertTemp(mattressF.right),
+          powerOnTemperature: convertTemp(powerOnF.right),
           targetTemperature: convertTemp(status.rightSide.targetTemperature),
         },
         ...(primeCompletedAt && { primeCompletedNotification: { timestamp: primeCompletedAt } }),
@@ -407,6 +413,18 @@ export const deviceRouter = router({
    * @param temperature - Optional manual target when powering on (range: 55-110°F)
    * @throws {TRPCError} INTERNAL_SERVER_ERROR if hardware connection fails
    */
+  /** Remembers where this side goes when turned on, without touching the hardware. */
+  setPowerOnTemperature: publicProcedure
+    .meta({ openapi: { method: 'POST', path: '/device/power-on-temperature', protect: false, tags: ['Device'] } })
+    .input(z.object({ side: sideSchema, temperature: temperatureSchema }).strict())
+    .output(z.object({ success: z.boolean() }))
+    .mutation(({ input }) => {
+      savePowerOnTemperature(input.side, input.temperature)
+      notePowerOnTemperature(input.side, input.temperature)
+      broadcastMutationStatus()
+      return { success: true }
+    }),
+
   setPower: publicProcedure
     .meta({ openapi: { method: 'POST', path: '/device/power', protect: false, tags: ['Device'] } })
     .input(
@@ -446,8 +464,10 @@ export const deviceRouter = router({
           // not switch it off once the alarm is over.
           const jobManager = await getJobManager()
           jobManager.releaseHeldPowerOff(input.side)
-          if (input.temperature === undefined) await getTemperatureController().powerOnLocked(input.side)
-          else await getTemperatureController().setManualLocked(input.side, input.temperature)
+          // Pressing power means "go to what I set", so the preset also beats a running schedule.
+          const temperature = input.temperature ?? readPowerOnTemperature(input.side)
+          if (temperature === null) await getTemperatureController().powerOnLocked(input.side)
+          else await getTemperatureController().setManualLocked(input.side, temperature)
         }
         else {
           await getTemperatureController().powerOffLocked(input.side)

@@ -260,6 +260,13 @@
       "when": 1793778099802,
       "tag": "0036_room_reading_source",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1793780196093,
+      "tag": "0037_side_power_on_temperature",
+      "breakpoints": true
     }
   ]
 }

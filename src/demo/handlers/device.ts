@@ -69,6 +69,7 @@ function sideStatus(side: Side, unit: 'F' | 'C') {
   return {
     currentTemperature: cur === null ? null : conv(cur),
     mattressTemperature: cur === null ? null : conv(cur),
+    powerOnTemperature: null,
     targetTemperature: s.powered ? conv(s.targetF) : null,
     currentLevel: cur === null ? 0 : toLevel(cur),
     targetLevel: s.powered ? toLevel(s.targetF) : 0,
@@ -127,6 +128,8 @@ export const device: DemoHandlers<'device'> = {
     sides[input.side].source = 'schedule'
     return controlStatus(input.side)
   },
+
+  setPowerOnTemperature: () => ({ success: true }),
 
   setPower: (input) => {
     const s = sides[input.side]

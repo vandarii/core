@@ -63,8 +63,10 @@ export interface TempControlProps {
   /** Decides the direction; the bed lags the water. Defaults to bedF for static previews. */
   waterF?: number | null
   unit?: TempUnit
-  /** Side powered on. Off renders at 35% opacity and disables drag. */
+  /** Side powered on. Off renders dimmed and disables drag unless adjustableOff. */
   power?: boolean
+  /** Off, but the dial still sets where the side goes when turned on. */
+  adjustableOff?: boolean
   /** Called while dragging with a whole-degree °F value. */
   onChange?: (f: number) => void
   /** Called on drag release with the final °F value. */
@@ -86,6 +88,7 @@ export function TempControl({
   waterF = bedF,
   unit = 'F',
   power = true,
+  adjustableOff = false,
   onChange,
   onCommit,
   statusOverride,
@@ -97,7 +100,8 @@ export function TempControl({
   const f = fraction(shownF)
   const dir = directionFor(shownF, waterF)
   const accent = ACCENT_VAR[dir]
-  const interactive = power && !!(onChange || onCommit)
+  const interactive = (power || adjustableOff) && !!(onChange || onCommit)
+  const dimmed = !power && (adjustableOff ? 'opacity-70' : 'opacity-35')
 
   const display = Math.round(setpointFToDisplay(shownF, unit) ?? shownF)
   const bedDisplay = bedF != null && Number.isFinite(bedF) ? Math.round(setpointFToDisplay(bedF, unit) ?? bedF) : null
@@ -171,7 +175,7 @@ export function TempControl({
     }
 
     return (
-      <div data-no-swipe className={cn('flex gap-3.5', !power && 'opacity-35', className)} style={{ width: W, height: H }}>
+      <div data-no-swipe className={cn('flex gap-3.5', dimmed, className)} style={{ width: W, height: H }}>
         <div
           {...a11y}
           className={cn('relative w-[76px] shrink-0 touch-none overflow-hidden rounded-[38px] bg-track outline-none focus-visible:ring-2 focus-visible:ring-fg-3', interactive && 'cursor-ns-resize')}
@@ -225,7 +229,7 @@ export function TempControl({
   }
 
   return (
-    <div data-no-swipe className={cn('relative', !power && 'opacity-35', className)} style={{ width: W, height: H }}>
+    <div data-no-swipe className={cn('relative', dimmed, className)} style={{ width: W, height: H }}>
       <svg
         {...a11y}
         viewBox={`0 0 ${W} ${W}`}

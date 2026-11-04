@@ -73,6 +73,12 @@ const pumpStallNotificationMock = vi.hoisted(() => ({
   getAllPumpStallNotices: vi.fn<() => { left: unknown, right: unknown }>(() => ({ left: null, right: null })),
 }))
 
+const presetMock = vi.hoisted(() => ({ read: vi.fn((): number | null => null), save: vi.fn() }))
+vi.mock('@/src/temperature/powerOnTemperature', () => ({
+  readPowerOnTemperature: presetMock.read,
+  savePowerOnTemperature: presetMock.save,
+}))
+
 const controllerMock = vi.hoisted(() => ({
   setManualLocked: vi.fn(),
   powerOffLocked: vi.fn(),
@@ -681,6 +687,24 @@ describe('temperature controller API', () => {
     expect(controllerMock.setManualLocked.mock.calls).toEqual([['left', 72]])
     expect(controllerMock.powerOnLocked).toHaveBeenCalledExactlyOnceWith('right')
     expect(dbMock.update).not.toHaveBeenCalled()
+  })
+
+  it('powers on to the preset, and an explicit temperature still wins', async () => {
+    presetMock.read.mockReturnValue(81)
+    try {
+      await caller.setPower({ side: 'left', powered: true })
+      await caller.setPower({ side: 'right', powered: true, temperature: 72 })
+      expect(controllerMock.setManualLocked.mock.calls).toEqual([['left', 81], ['right', 72]])
+      expect(controllerMock.powerOnLocked).not.toHaveBeenCalled()
+    }
+    finally { presetMock.read.mockReturnValue(null) }
+  })
+
+  it('saves a preset without touching the hardware', async () => {
+    expect(await caller.setPowerOnTemperature({ side: 'left', temperature: 81 })).toEqual({ success: true })
+    expect(presetMock.save).toHaveBeenCalledExactlyOnceWith('left', 81)
+    expect(controllerMock.setManualLocked).not.toHaveBeenCalled()
+    expect(controllerMock.powerOnLocked).not.toHaveBeenCalled()
   })
 
   it('releases a power-off held for an alarm on power-on only', async () => {

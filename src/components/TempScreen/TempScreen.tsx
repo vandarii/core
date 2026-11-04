@@ -261,7 +261,7 @@ export const TempScreen = () => {
               waterF={c.waterF}
               isOn={c.isOn}
               paused={blocked[side]}
-              stepDisabled={!c.isOn || blocked[side]}
+              stepDisabled={blocked[side]}
               powerDisabled={c.powerPending || blocked[side]}
               holdMinutes={holdMinutes}
               onHoldChange={setHoldMinutes}

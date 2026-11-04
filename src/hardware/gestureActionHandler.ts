@@ -6,6 +6,7 @@ import { nextSnoozeSeconds } from './snoozeLength'
 import { getTemperatureController } from '@/src/temperature/instance'
 import { shouldBlock as pumpStallShouldBlock } from './pumpStallGuard'
 import { withSideLock } from '@/src/hardware/sideLock'
+import { readPowerOnTemperature } from '@/src/temperature/powerOnTemperature'
 
 // Re-export for callers that need to build deps
 export type { GestureActionDeps }
@@ -187,7 +188,7 @@ export class GestureActionHandler {
       // Resolve the toggle after older queued commands have updated state.
       const current = await this.deps.findDeviceState(event.side)
       const nextPowered = !(current?.isPowered ?? false)
-      const target = current?.targetTemperature ?? 75
+      const target = readPowerOnTemperature(event.side) ?? current?.targetTemperature ?? 75
       if (nextPowered && pumpStallShouldBlock(event.side)) {
         console.warn(`[gestureActionHandler] skipped power-on: pump stall guard blocks ${event.side}`)
         return

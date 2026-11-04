@@ -3,19 +3,19 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { trpc } from '@/src/utils/trpc'
 import { useOptimisticValue } from '@/src/hooks/useOptimisticValue'
-import { TEMP } from '@/src/lib/tempColors'
 import type { Side } from '@/src/providers/SideProvider'
 
 interface SideStatus {
   currentTemperature: number | null
   mattressTemperature?: number | null
+  powerOnTemperature?: number | null
   targetTemperature: number | null
   targetLevel: number
 }
 
 export interface SideTemperature {
   side: Side
-  /** Optimistic target set point, °F. */
+  /** Optimistic target set point, °F. While off, where the side goes when turned on. */
   targetF: number
   /** Measured mattress temperature, °F (null while the surface sensors are missing or stale). */
   bedF: number | null
@@ -32,6 +32,9 @@ export interface SideTemperature {
   stepTemp: (f: number) => void
   commitPower: (on: boolean) => void
 }
+
+/** Where a side with nothing else to go on starts; matches the server. */
+const POWER_ON_DEFAULT_F = 75
 
 /** −/+ taps within this window pool into one setTemperature. */
 const STEP_COMMIT_DELAY_MS = 500
@@ -52,16 +55,28 @@ export function useSideTemperature(
 ): SideTemperature {
   const setTempMutation = trpc.device.setTemperature.useMutation()
   const setPowerMutation = trpc.device.setPower.useMutation()
+  const setPowerOnMutation = trpc.device.setPowerOnTemperature.useMutation()
 
-  const targetOpt = useOptimisticValue(sideStatus?.targetTemperature ?? TEMP.BASE_F)
+  const targetOpt = useOptimisticValue(sideStatus?.targetTemperature ?? sideStatus?.powerOnTemperature ?? POWER_ON_DEFAULT_F)
   const powerOpt = useOptimisticValue((sideStatus?.targetLevel ?? 0) !== 0)
   const { preview: previewTarget, commit: commitTarget, discard: discardTarget } = targetOpt
   const { commit: commitPowerOpt, discard: discardPower } = powerOpt
   const { mutate: mutateTemp } = setTempMutation
   const { mutate: mutatePower } = setPowerMutation
+  const { mutate: mutatePowerOn } = setPowerOnMutation
+  // The latest intent, not the last render: linking powers a side and sets it in the same tick.
+  const intendedOn = useRef(powerOpt.value)
+  useEffect(() => {
+    intendedOn.current = powerOpt.value
+  }, [powerOpt.value])
 
   const commitTemp = useCallback((f: number) => {
     commitTarget(f)
+    // An off side only remembers the value: setTemperature would switch it on.
+    if (!intendedOn.current) {
+      mutatePowerOn({ side, temperature: f }, { onError: () => discardTarget() })
+      return
+    }
     mutateTemp(
       // 30 min is the server default; only send an explicit override.
       { side, temperature: f, ...(holdMinutes === 30 ? {} : { holdMinutes }) },
@@ -70,9 +85,10 @@ export function useSideTemperature(
         onError: () => discardTarget(),
       },
     )
-  }, [side, holdMinutes, refetch, commitTarget, discardTarget, mutateTemp])
+  }, [side, holdMinutes, refetch, commitTarget, discardTarget, mutateTemp, mutatePowerOn])
 
   const stepTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingStepF = useRef<number | null>(null)
   useEffect(() => () => {
     if (stepTimer.current) clearTimeout(stepTimer.current)
   }, [])
@@ -86,6 +102,7 @@ export function useSideTemperature(
 
   const stepTemp = useCallback((f: number) => {
     previewTarget(f)
+    pendingStepF.current = f
     if (stepTimer.current) clearTimeout(stepTimer.current)
     stepTimer.current = setTimeout(() => {
       stepTimer.current = null
@@ -95,14 +112,23 @@ export function useSideTemperature(
 
   const commitPower = useCallback((on: boolean) => {
     commitPowerOpt(on)
+    intendedOn.current = on
+    // −/+ taps still waiting to send: power on straight to them.
+    const pendingF = on && stepTimer.current ? pendingStepF.current : null
+    if (pendingF !== null && stepTimer.current) {
+      clearTimeout(stepTimer.current)
+      stepTimer.current = null
+      commitTarget(pendingF)
+      mutatePowerOn({ side, temperature: pendingF })
+    }
     mutatePower(
-      { side, powered: on },
+      { side, powered: on, ...(pendingF !== null && { temperature: pendingF }) },
       {
         onSettled: () => { void refetch() },
         onError: () => discardPower(),
       },
     )
-  }, [side, refetch, commitPowerOpt, discardPower, mutatePower])
+  }, [side, refetch, commitPowerOpt, commitTarget, discardPower, mutatePower, mutatePowerOn])
 
   return {
     side,

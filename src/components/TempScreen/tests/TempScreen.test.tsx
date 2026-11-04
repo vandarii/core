@@ -15,6 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const m = vi.hoisted(() => ({
   setTemp: vi.fn(),
   setPower: vi.fn(),
+  setPowerOn: vi.fn(),
   tempPending: false,
   updateSide: vi.fn(),
   invalidateSettings: vi.fn(),
@@ -40,6 +41,7 @@ vi.mock('@/src/utils/trpc', () => ({
     device: {
       setTemperature: { useMutation: () => ({ mutate: m.setTemp, isPending: m.tempPending }) },
       setPower: { useMutation: () => ({ mutate: m.setPower, isPending: false }) },
+      setPowerOnTemperature: { useMutation: () => ({ mutate: m.setPowerOn, isPending: false }) },
       resumeTemperature: { useMutation: () => ({ mutate: vi.fn(), isPending: false, error: null }) },
       getStatus: { useQuery: () => ({ data: { podVersion: 'J00' } }) },
     },
@@ -129,6 +131,7 @@ const sideStatus = (target: number, level = 5) => ({
 beforeEach(() => {
   m.setTemp.mockReset()
   m.setPower.mockReset()
+  m.setPowerOn.mockReset()
   m.tempPending = false
   m.updateSide.mockReset()
   m.invalidateSettings.mockReset()
@@ -401,15 +404,46 @@ describe('TempScreen', () => {
     expect((screen.getByRole('button', { name: 'All off' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
-  it('power toggles one side and a powered-off side disables ±', () => {
+  it('power toggles one side', () => {
     m.status = { ...(m.status as object), leftSide: sideStatus(76, 0) }
     const screen = render(<TempScreen />)
     const left = card(screen, 'Jon (left)')
-    expect((left.getByRole('button', { name: 'Warmer' }) as HTMLButtonElement).disabled).toBe(true)
-    expect((left.getByRole('button', { name: 'Cooler' }) as HTMLButtonElement).disabled).toBe(true)
     expect(left.getByText('OFF')).toBeTruthy()
     fireEvent.click(left.getByRole('button', { name: 'Turn on' }))
     expect(m.setPower).toHaveBeenCalledExactlyOnceWith({ side: 'left', powered: true }, expect.anything())
+  })
+
+  it('remembers ± on an off side without switching it on', () => {
+    vi.useFakeTimers()
+    m.status = { ...(m.status as object), leftSide: { ...sideStatus(76, 0), targetTemperature: null, powerOnTemperature: 80 } }
+    const screen = render(<TempScreen />)
+    const left = card(screen, 'Jon (left)')
+    expect(left.getByTestId('temp-numeral').textContent).toBe('80°')
+    fireEvent.click(left.getByRole('button', { name: 'Warmer' }))
+    act(() => vi.advanceTimersByTime(600))
+    expect(m.setPowerOn).toHaveBeenCalledExactlyOnceWith({ side: 'left', temperature: 81 }, expect.anything())
+    expect(m.setTemp).not.toHaveBeenCalled()
+    expect(m.setPower).not.toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it('powers on straight to a ± tap still waiting to send', () => {
+    vi.useFakeTimers()
+    m.status = { ...(m.status as object), leftSide: { ...sideStatus(76, 0), targetTemperature: null, powerOnTemperature: 80 } }
+    const screen = render(<TempScreen />)
+    const left = card(screen, 'Jon (left)')
+    fireEvent.click(left.getByRole('button', { name: 'Warmer' }))
+    fireEvent.click(left.getByRole('button', { name: 'Turn on' }))
+    expect(m.setPower).toHaveBeenCalledExactlyOnceWith({ side: 'left', powered: true, temperature: 81 }, expect.anything())
+    act(() => vi.advanceTimersByTime(600))
+    expect(m.setTemp).not.toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it('shows the real default on an off side with no preset', () => {
+    m.status = { ...(m.status as object), leftSide: { ...sideStatus(76, 0), targetTemperature: null } }
+    const screen = render(<TempScreen />)
+    expect(card(screen, 'Jon (left)').getByTestId('temp-numeral').textContent).toBe('75°')
   })
 
   it('sends a non-default hold duration with the next adjustment', () => {

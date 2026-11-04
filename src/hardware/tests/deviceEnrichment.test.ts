@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const dbMock = vi.hoisted(() => ({ query: vi.fn<() => Promise<unknown[]>>(), room: vi.fn<() => Promise<unknown[]>>() }))
+vi.mock('@/src/temperature/powerOnTemperature', () => ({ readPowerOnTemperature: () => null }))
 vi.mock('@/src/db', () => ({
   biometricsDb: {
     select: () => ({ from: () => ({ orderBy: () => ({ limit: dbMock.query }) }) }),
@@ -119,6 +120,7 @@ describe('device enrichment cache', () => {
 
     expect(await getDeviceEnrichment()).toEqual({
       mattressF: { left: null, right: null },
+      powerOnF: { left: null, right: null },
       roomClimate: { temperatureC: null, humidity: null, timestamp: null, source: null },
       waterLevelRaw: { raw: null, calibratedEmpty: null, calibratedFull: null, timestamp: null },
     })

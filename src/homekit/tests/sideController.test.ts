@@ -7,6 +7,11 @@ const releaseHeldPowerOff = vi.fn()
 
 // Test HomeKit's staging, serialization, and error mapping at the shared
 // controller boundary. Controller/hardware integration has its own real-DB tests.
+const preset = vi.hoisted(() => ({ read: vi.fn((): number | null => null), save: vi.fn() }))
+vi.mock('@/src/temperature/powerOnTemperature', () => ({
+  readPowerOnTemperature: preset.read,
+  savePowerOnTemperature: preset.save,
+}))
 vi.mock('@/src/temperature/instance', () => ({
   getTemperatureController: () => ({
     setManualLocked: setTemperature,
@@ -154,6 +159,13 @@ describe('sideController', () => {
       await setTargetTemperature(monitor(offStatus), 'left', 68)
       expect(setTemperature).not.toHaveBeenCalled()
       expect(getStagedTargetF(monitor(offStatus), 'left')).toBe(68)
+      expect(preset.save).toHaveBeenCalledWith('left', 68)
+    })
+
+    it('prefers the preset shared with the web UI over its own cache', async () => {
+      await setTargetTemperature(monitor(offStatus), 'left', 68)
+      preset.read.mockReturnValueOnce(81)
+      expect(getStagedTargetF(monitor(offStatus), 'left')).toBe(81)
     })
 
     it('caches AND writes when the side is on', async () => {

@@ -1184,6 +1184,7 @@ exports[`complete Drizzle schema contracts > pins every main-database table, col
       "always_on | sql:integer | logical:boolean/SQLiteBoolean | not-null | default:false | not-primary-key | not-unique | not-autoincrement | enum:none",
       "auto_off_enabled | sql:integer | logical:boolean/SQLiteBoolean | not-null | default:false | not-primary-key | not-unique | not-autoincrement | enum:none",
       "auto_off_minutes | sql:integer | logical:number/SQLiteInteger | not-null | default:30 | not-primary-key | not-unique | not-autoincrement | enum:none",
+      "power_on_temperature | sql:real | logical:number/SQLiteReal | nullable | default:none | not-primary-key | not-unique | not-autoincrement | enum:none",
       "auto_on_enabled | sql:integer | logical:boolean/SQLiteBoolean | not-null | default:false | not-primary-key | not-unique | not-autoincrement | enum:none",
       "auto_on_minutes | sql:integer | logical:number/SQLiteInteger | not-null | default:5 | not-primary-key | not-unique | not-autoincrement | enum:none",
       "auto_on_start | sql:text | logical:string/SQLiteText | not-null | default:20:00 | not-primary-key | not-unique | not-autoincrement | enum:none",

@@ -91,3 +91,10 @@ it.each(['dial', 'slider'] as const)('drags and commits the %s, clamping at its 
   expect(onCommit).toHaveBeenCalledTimes(2)
   expect(onCommit).toHaveBeenLastCalledWith(variant === 'dial' ? 110 : 55)
 })
+
+it('stays adjustable while off only when asked', () => {
+  const { rerender } = render(<TempControl targetF={76} power={false} onCommit={() => {}} />)
+  expect(screen.getByRole('slider').getAttribute('aria-disabled')).toBe('true')
+  rerender(<TempControl targetF={76} power={false} adjustableOff onCommit={() => {}} />)
+  expect(screen.getByRole('slider').getAttribute('aria-disabled')).toBe('false')
+})

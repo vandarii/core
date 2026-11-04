@@ -580,8 +580,8 @@ describe('hardware/dacMonitor.instance', () => {
       expect(broadcastFrameMock).toHaveBeenCalledWith({
         type: 'deviceStatus',
         ts: 1_720_000_123_456,
-        leftSide: { ...status.leftSide, mattressTemperature: null, isAlarmVibrating: true },
-        rightSide: { ...status.rightSide, mattressTemperature: null, isAlarmVibrating: false },
+        leftSide: { ...status.leftSide, mattressTemperature: null, powerOnTemperature: null, isAlarmVibrating: true },
+        rightSide: { ...status.rightSide, mattressTemperature: null, powerOnTemperature: null, isAlarmVibrating: false },
         waterLevel: 'ok',
         isPriming: false,
         snooze: {

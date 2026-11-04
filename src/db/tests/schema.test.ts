@@ -235,6 +235,7 @@ const expectedTables: Record<string, TableSpec> = {
       { name: 'always_on', notNull: true, default: false },
       { name: 'auto_off_enabled', notNull: true, default: false },
       { name: 'auto_off_minutes', notNull: true, default: 30 },
+      { name: 'power_on_temperature', notNull: false, default: undefined },
       { name: 'auto_on_enabled', notNull: true, default: false },
       { name: 'auto_on_minutes', notNull: true, default: 5 },
       { name: 'auto_on_start', notNull: true, default: '20:00' },

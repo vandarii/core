@@ -42,6 +42,7 @@ import { getJobManager } from '@/src/scheduler/instance'
 import { broadcastMutationStatus } from '@/src/streaming/broadcastMutationStatus'
 import { getTemperatureController } from '@/src/temperature/instance'
 import { cancelAutoOffTimer } from './autoOffWatcher'
+import { readPowerOnTemperature } from '@/src/temperature/powerOnTemperature'
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -260,7 +261,7 @@ async function powerOnSide(side: Side, gen: number): Promise<void> {
       catch (e) {
         console.warn(`[auto-on] ${side}: could not release a held power-off:`, e instanceof Error ? e.message : e)
       }
-      const fallback = state[side].lastTarget ?? DEFAULT_FALLBACK_TEMP_F
+      const fallback = readPowerOnTemperature(side) ?? state[side].lastTarget ?? DEFAULT_FALLBACK_TEMP_F
       const status = await getTemperatureController().powerOnLocked(side, fallback, () => gen === generation)
       if (gen !== generation) {
         skip()

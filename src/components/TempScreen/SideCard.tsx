@@ -206,6 +206,7 @@ export function SideCard({
                         waterF={waterF}
                         unit={unit}
                         power={isOn}
+                        adjustableOff={!paused}
                         onChange={onPreview}
                         onCommit={onCommit}
                         statusOverride={paused ? 'PAUSED' : isOn ? undefined : 'OFF'}

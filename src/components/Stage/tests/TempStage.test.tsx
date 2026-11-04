@@ -24,6 +24,7 @@ const m = vi.hoisted(() => ({
   room: undefined as { temperatureC: number | null, source: string | null } | undefined,
   setTemp: vi.fn(),
   setPower: vi.fn(),
+  setPowerOn: vi.fn(),
   updateSide: vi.fn(),
   invalidateSettings: vi.fn(),
   refetch: vi.fn(),
@@ -57,6 +58,7 @@ vi.mock('@/src/utils/trpc', () => ({
     device: {
       setTemperature: { useMutation: () => ({ mutate: m.setTemp, isPending: false }) },
       setPower: { useMutation: () => ({ mutate: m.setPower, isPending: false }) },
+      setPowerOnTemperature: { useMutation: () => ({ mutate: m.setPowerOn, isPending: false }) },
       resumeTemperature: { useMutation: (opts?: { onSuccess?: () => void }) => ({ mutate: () => opts?.onSuccess?.(), isPending: false, error: null }) },
     },
     settings: {
