@@ -33,7 +33,7 @@ export function AutopilotConsole() {
   const searchParams = useSearchParams()
   const { unit } = useTemperatureUnit()
   const view = resolveAutopilotView(searchParams.get('view'))
-  useDocumentTitle(AUTOPILOT_VIEWS.find(v => v.id === view)?.label, 'Autopilot')
+  useDocumentTitle(AUTOPILOT_VIEWS.find(v => v.id === view)?.label, 'Rules')
   const setView = useCallback((next: AutopilotView) => {
     const params = new URLSearchParams(searchParams.toString())
     if (next === 'automations') params.delete('view')
@@ -125,11 +125,11 @@ export function AutopilotConsole() {
 
   return (
     <>
-      <span className="-mb-2 hidden font-mono text-[13px] text-fg-2 min-[900px]:block">Autopilot /</span>
+      <span className="-mb-2 hidden font-mono text-[13px] text-fg-2 min-[900px]:block">Rules /</span>
       <PageHeader
         title={(
           <span className="flex items-baseline gap-3">
-            <span className="min-[900px]:hidden">Autopilot</span>
+            <span className="min-[900px]:hidden">Rules</span>
             <span className="hidden min-[900px]:inline">{AUTOPILOT_VIEWS.find(v => v.id === view)?.label}</span>
             {onAutomations && !listQ.isLoading && (
               <span className="font-mono text-xs font-normal whitespace-nowrap text-fg-2" data-testid="automations-status">{statusLine(rows)}</span>
@@ -148,7 +148,7 @@ export function AutopilotConsole() {
               </Button>
             )}
             <SegmentedControl
-              ariaLabel="Autopilot view"
+              ariaLabel="Rules view"
               size="sm"
               className="min-[900px]:hidden"
               value={view}

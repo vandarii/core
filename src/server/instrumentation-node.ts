@@ -20,6 +20,7 @@ import { shutdownBaseController } from '@/src/hardware/base/instance'
 import { getJobManager, shutdownJobManager } from '@/src/scheduler'
 import { getAutomationEngine, shutdownAutomationEngine } from '@/src/automation'
 import { startTemperatureController, stopTemperatureController } from '@/src/temperature/instance'
+import { startSleepSessionTicker, stopSleepSessionTicker } from '@/src/sleepSession/instance'
 import { closeDatabase, closeBiometricsDatabase } from '@/src/db'
 import { startBiometricsRetention, stopBiometricsRetention } from '@/src/db/retention'
 import { startAutomationRunsRetention, stopAutomationRunsRetention } from '@/src/db/automationRunsRetention'
@@ -68,6 +69,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
 
   // Step 0: Stop keepalive timers
   try {
+    stopSleepSessionTicker()
     await stopTemperatureController()
     shutdownBaseController()
     shutdownKeepalives()
@@ -433,6 +435,7 @@ async function initializeBackgroundServices(): Promise<void> {
     // Start biometrics time-series retention loop (non-blocking)
     startBiometricsRetention()
     startAutomationRunsRetention()
+    startSleepSessionTicker()
 
     // Boot the Autopilot rules engine beside the scheduler (non-blocking).
     // Shares the same hardware path; no-op until automations are created.

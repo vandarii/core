@@ -33,6 +33,7 @@ describe('appRouter public surface', () => {
       'waterLevel',
       'pumpAlerts',
       'runOnce',
+      'sleepSessions',
       'mqtt',
       'homekit',
       'archivePush',

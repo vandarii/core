@@ -9,6 +9,7 @@ import { Badge, StatusDot } from '@/src/components/ds/core'
 import { resolveSection, SECTIONS } from '@/src/components/Settings/sections'
 import { resolveSystemTab, SYSTEM_TABS } from '@/src/components/System/systemTabs'
 import { AUTOPILOT_VIEWS, resolveAutopilotView } from '@/src/components/Autopilot/autopilotViews'
+import { resolveSessionView, SESSION_VIEWS } from '@/src/components/SleepSession/sessionViews'
 import { resolveSleepSection, SLEEP_SECTIONS } from '@/src/components/Sleep/sleepViews'
 import { SidebarSearch } from '@/src/components/Search/CommandPalette'
 import { trpc } from '@/src/utils/trpc'
@@ -54,7 +55,7 @@ export function Sidebar({ className }: { className?: string }) {
         <SidebarSearch lang={lang} hasBase={hasBase} className="sticky top-0 z-[1] mb-2.5 bg-app shadow-[0_10px_0_0_var(--surface-app)]" />
         {items.map((n) => {
           const on = n.id === active
-          const group = n.id === 'autopilot' || n.id === 'sleep' || n.id === 'settings' || n.id === 'system'
+          const group = n.id === 'sessions' || n.id === 'autopilot' || n.id === 'sleep' || n.id === 'settings' || n.id === 'system'
           const Chevron = on ? ChevronDown : ChevronRight
           return (
             <div key={n.id} className="flex flex-col gap-0.5">
@@ -73,7 +74,7 @@ export function Sidebar({ className }: { className?: string }) {
               </Link>
               {group && on && (
                 <Suspense fallback={null}>
-                  <SubTree group={n.id as 'autopilot' | 'sleep' | 'settings' | 'system'} lang={lang} statusDot={statusDot} />
+                  <SubTree group={n.id as 'sessions' | 'autopilot' | 'sleep' | 'settings' | 'system'} lang={lang} statusDot={statusDot} />
                 </Suspense>
               )}
             </div>
@@ -119,11 +120,11 @@ export function Sidebar({ className }: { className?: string }) {
 }
 
 /**
- * Sections nested under their parent (Autopilot, Sleep, Settings, System), indented along a
+ * Sections nested under their parent (Autopilot, Rules, Sleep, Settings, System), indented along a
  * hairline without icons. Only the current group is expanded.
  */
 function SubTree({ group, lang, statusDot }: {
-  group: Extract<NavId, 'autopilot' | 'sleep' | 'settings' | 'system'>
+  group: Extract<NavId, 'sessions' | 'autopilot' | 'sleep' | 'settings' | 'system'>
   lang: string
   statusDot?: 'ok' | 'warn'
 }) {
@@ -154,6 +155,14 @@ function SubTree({ group, lang, statusDot }: {
       href: sec.id === 'nights' ? `/${lang}/sleep` : `/${lang}/sleep?view=${sec.id}`,
     }))
     current = resolveSleepSection(searchParams.get('view'))
+  }
+  else if (group === 'sessions') {
+    items = SESSION_VIEWS.map(v => ({
+      id: v.id,
+      label: v.label,
+      href: v.id === 'sleep' ? `/${lang}/sessions` : `/${lang}/sessions?view=${v.id}`,
+    }))
+    current = resolveSessionView(searchParams.get('view'))
   }
   else {
     items = AUTOPILOT_VIEWS.map(v => ({

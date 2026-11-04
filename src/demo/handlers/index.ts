@@ -17,6 +17,7 @@ import { raw } from './raw'
 import { runOnce } from './runOnce'
 import { schedules } from './schedules'
 import { settings } from './settings'
+import { sleepSessions } from './sleepSessions'
 import { sleepStages } from './sleepStages'
 import { system } from './system'
 import { waterLevel } from './waterLevel'
@@ -41,6 +42,7 @@ export const demoRouters = {
   runOnce,
   schedules,
   settings,
+  sleepSessions,
   sleepStages,
   system,
   waterLevel,

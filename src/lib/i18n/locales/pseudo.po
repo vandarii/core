@@ -78,7 +78,7 @@ msgstr ""
 msgid "┆ gen N profile change"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:97
+#: src/components/Search/searchIndex.ts:98
 msgid "3D stage"
 msgstr ""
 
@@ -158,7 +158,7 @@ msgstr ""
 msgid "Added readings"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:125
+#: src/components/Search/searchIndex.ts:126
 msgid "Adds the pod to Apple Home. Local-only — no Apple servers."
 msgstr ""
 
@@ -170,7 +170,7 @@ msgstr ""
 msgid "After configuration hash"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:113
+#: src/components/Search/searchIndex.ts:114
 msgid "After schedule ends"
 msgstr ""
 
@@ -244,19 +244,19 @@ msgstr ""
 msgid "Attempt {0}"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:114
+#: src/components/Search/searchIndex.ts:115
 msgid "Auto power-off cap"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:136
+#: src/components/Search/searchIndex.ts:137
 msgid "Auto-off"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:137
+#: src/components/Search/searchIndex.ts:138
 msgid "Auto-on"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:50
+#: src/components/Search/searchIndex.ts:51
 msgid "Automations that adjust the bed for you"
 msgstr ""
 
@@ -264,7 +264,7 @@ msgstr ""
 msgid "Available reference records by metric (across revisions)"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:135
+#: src/components/Search/searchIndex.ts:136
 msgid "Away mode"
 msgstr ""
 
@@ -292,7 +292,7 @@ msgid "Backtest submission"
 msgstr ""
 
 #: src/components/biometrics/Calibration/BiometricCalibration.tsx:30
-#: src/components/Search/searchIndex.ts:108
+#: src/components/Search/searchIndex.ts:109
 msgid "Backtests"
 msgstr ""
 
@@ -300,11 +300,11 @@ msgstr ""
 msgid "Baseline shared MAE"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:81
+#: src/components/Search/searchIndex.ts:82
 msgid "Bed and water temperature history"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:133
+#: src/components/Search/searchIndex.ts:134
 msgid "Bed setup"
 msgstr ""
 
@@ -364,19 +364,19 @@ msgstr ""
 msgid "Breathing rate (breaths/min)"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:105
+#: src/components/Search/searchIndex.ts:106
 msgid "Breathing tuning"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:105
+#: src/components/Search/searchIndex.ts:106
 msgid "Breathing-rate interval limits"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:118
+#: src/components/Search/searchIndex.ts:119
 msgid "Brightness of the pod’s light"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:129
+#: src/components/Search/searchIndex.ts:130
 msgid "Broker connection"
 msgstr ""
 
@@ -522,7 +522,7 @@ msgstr ""
 msgid "Choose the protocol before looking at results. Creating an experiment does not run a job or apply a profile."
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:133
+#: src/components/Search/searchIndex.ts:134
 msgid "Choose who normally sleeps here"
 msgstr ""
 
@@ -534,11 +534,11 @@ msgstr ""
 msgid "Circles are recomputed readings; squares are reference points; horizontal bars are reference intervals. Only the two displayed pages are shown. This visual overlay does not create new matched pairs or scores."
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:117
+#: src/components/Search/searchIndex.ts:118
 msgid "Circulates water to clear air from the lines"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:141
+#: src/components/Search/searchIndex.ts:142
 msgid "Cleanup"
 msgstr ""
 
@@ -550,7 +550,7 @@ msgstr ""
 msgid "click a night"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:112
+#: src/components/Search/searchIndex.ts:113
 msgid "Clocks across the app; scheduled times are unchanged"
 msgstr ""
 
@@ -603,7 +603,7 @@ msgstr ""
 msgid "Compare stored readings"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:107
+#: src/components/Search/searchIndex.ts:108
 msgid "Compare the pod against Apple Watch or other references"
 msgstr ""
 
@@ -681,7 +681,7 @@ msgstr ""
 msgid "Confusion matrix in minutes: reference rows, predicted columns"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:101
+#: src/components/Search/searchIndex.ts:102
 msgid "Copies the biometrics archive to a host you control over SSH, once per night"
 msgstr ""
 
@@ -741,11 +741,11 @@ msgstr ""
 msgid "Current stage view"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:117
+#: src/components/Search/searchIndex.ts:118
 msgid "Daily prime"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:116
+#: src/components/Search/searchIndex.ts:117
 msgid "Daily reboot"
 msgstr ""
 
@@ -780,7 +780,7 @@ msgstr ""
 msgid "Deep"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:113
+#: src/components/Search/searchIndex.ts:114
 msgid "Default power state when a curve finishes"
 msgstr ""
 
@@ -808,19 +808,19 @@ msgstr ""
 msgid "Deviation window"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:119
+#: src/components/Search/searchIndex.ts:120
 msgid "Dims the LED overnight"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:145
+#: src/components/Search/searchIndex.ts:146
 msgid "Disk"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:80
+#: src/components/Search/searchIndex.ts:81
 msgid "Disk usage and recording"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:252
+#: src/components/Search/searchIndex.ts:253
 msgid "Docs"
 msgstr ""
 
@@ -837,7 +837,7 @@ msgstr ""
 msgid "Durations cover sequential Python work through result generation. Memory is the largest process lifetime peak. These measurements exclude coordinator and scoring costs and do not establish live ingestion health."
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:139
+#: src/components/Search/searchIndex.ts:140
 msgid "Each 5-minute epoch takes the first rule that matches"
 msgstr ""
 
@@ -1017,11 +1017,11 @@ msgstr ""
 msgid "F1"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:99
+#: src/components/Search/searchIndex.ts:100
 msgid "Fahrenheit or Celsius"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:111
+#: src/components/Search/searchIndex.ts:112
 msgid "Fahrenheit or Celsius across the app"
 msgstr ""
 
@@ -1196,11 +1196,11 @@ msgstr ""
 msgid "Heart rate (bpm)"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:104
+#: src/components/Search/searchIndex.ts:105
 msgid "Heart rate tuning"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:86
+#: src/components/Search/searchIndex.ts:87
 msgid "Heart rate, HRV and breathing trends"
 msgstr ""
 
@@ -1249,15 +1249,15 @@ msgstr ""
 msgid "Holdout is the number to trust; tuning nights were used to pick these values."
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:128
+#: src/components/Search/searchIndex.ts:129
 msgid "Home Assistant discovery"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:125
+#: src/components/Search/searchIndex.ts:126
 msgid "HomeKit bridge"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:104
+#: src/components/Search/searchIndex.ts:105
 msgid "How heart-rate estimates are accepted and tracked"
 msgstr ""
 
@@ -1294,7 +1294,7 @@ msgstr ""
 msgid "HRV definitions differ or are partly unknown. A combined HRV average is unavailable."
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:106
+#: src/components/Search/searchIndex.ts:107
 msgid "HRV index"
 msgstr ""
 
@@ -1349,7 +1349,7 @@ msgid "Import reference"
 msgstr ""
 
 #: src/components/biometrics/Calibration/CalibrationReferences.tsx:53
-#: src/components/Search/searchIndex.ts:107
+#: src/components/Search/searchIndex.ts:108
 msgid "Import reference measurements"
 msgstr ""
 
@@ -1438,7 +1438,7 @@ msgstr ""
 msgid "Inspect stage traces"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:143
+#: src/components/Search/searchIndex.ts:144
 msgid "Installed version and updates"
 msgstr ""
 
@@ -1451,7 +1451,7 @@ msgstr ""
 msgid "Insufficient paired nights"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:131
+#: src/components/Search/searchIndex.ts:132
 msgid "Internet access"
 msgstr ""
 
@@ -1530,11 +1530,11 @@ msgstr ""
 msgid "latest MAE {0}, bias {1} {unit}"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:118
+#: src/components/Search/searchIndex.ts:119
 msgid "LED brightness"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:119
+#: src/components/Search/searchIndex.ts:120
 msgid "LED night mode"
 msgstr ""
 
@@ -1547,7 +1547,7 @@ msgstr ""
 msgid "Light"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:98
+#: src/components/Search/searchIndex.ts:99
 msgid "Light or dark appearance"
 msgstr ""
 
@@ -1559,7 +1559,7 @@ msgstr ""
 msgid "Linking Watch data already on the pod…"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:131
+#: src/components/Search/searchIndex.ts:132
 msgid "Local only keeps the pod from reaching external servers"
 msgstr ""
 
@@ -1678,7 +1678,7 @@ msgstr ""
 msgid "Missing observations remain missing. The IBI variability index is not clinical RMSSD."
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:127
+#: src/components/Search/searchIndex.ts:128
 msgid "MQTT bridge"
 msgstr ""
 
@@ -1777,11 +1777,11 @@ msgstr ""
 msgid "Night progress is not available yet."
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:85
+#: src/components/Search/searchIndex.ts:86
 msgid "Night-by-night sleep, stages and score"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:101
+#: src/components/Search/searchIndex.ts:102
 msgid "Nightly archive push"
 msgstr ""
 
@@ -1789,7 +1789,7 @@ msgstr ""
 msgid "Nights as a table"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:52
+#: src/components/Search/searchIndex.ts:53
 msgid "Nights, sleep stages and vitals"
 msgstr ""
 
@@ -2255,7 +2255,7 @@ msgstr ""
 msgid "Pod − Watch per night, by bed-entry date. The goal is zero; dashed lines mark profile changes."
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:53
+#: src/components/Search/searchIndex.ts:54
 msgid "Pod health and diagnostics"
 msgstr ""
 
@@ -2263,7 +2263,7 @@ msgstr ""
 msgid "Pod minus Watch per night: MAE and bias per metric, and stage kappa"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:72
+#: src/components/Search/searchIndex.ts:73
 msgid "Pod status at a glance"
 msgstr ""
 
@@ -2289,7 +2289,7 @@ msgstr ""
 msgid "Pooled stage confusion"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:115
+#: src/components/Search/searchIndex.ts:116
 msgid "Powers a side off when the pump stalls"
 msgstr ""
 
@@ -2301,7 +2301,7 @@ msgstr ""
 msgid "Predicted minutes"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:54
+#: src/components/Search/searchIndex.ts:55
 msgid "Preferences for the pod and this device"
 msgstr ""
 
@@ -2422,19 +2422,19 @@ msgstr ""
 msgid "Protocol hash"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:128
+#: src/components/Search/searchIndex.ts:129
 msgid "Publishes climate, switch and sensor entities"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:127
+#: src/components/Search/searchIndex.ts:128
 msgid "Publishes status and biometrics, accepts commands"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:115
+#: src/components/Search/searchIndex.ts:116
 msgid "Pump stall protection"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:75
+#: src/components/Search/searchIndex.ts:76
 msgid "Pump, water and firmware state"
 msgstr ""
 
@@ -2470,7 +2470,7 @@ msgstr ""
 msgid "range"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:79
+#: src/components/Search/searchIndex.ts:80
 msgid "Raw sensor streams"
 msgstr ""
 
@@ -2480,7 +2480,7 @@ msgstr ""
 msgid "Reading RAW archives · {0} / {1}"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:140
+#: src/components/Search/searchIndex.ts:141
 msgid "Readings outside these limits are ignored"
 msgstr ""
 
@@ -2488,7 +2488,7 @@ msgstr ""
 msgid "Recall"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:77
+#: src/components/Search/searchIndex.ts:78
 msgid "Recent service logs"
 msgstr ""
 
@@ -2722,7 +2722,7 @@ msgstr ""
 msgid "Replay retained waveforms"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:108
+#: src/components/Search/searchIndex.ts:109
 msgid "Replay saved nights against a profile"
 msgstr ""
 
@@ -2801,7 +2801,7 @@ msgstr ""
 msgid "Restart archive scan"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:116
+#: src/components/Search/searchIndex.ts:117
 msgid "Restart the pod once a day"
 msgstr ""
 
@@ -2935,7 +2935,7 @@ msgstr ""
 msgid "Rule {0}"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:90
+#: src/components/Search/searchIndex.ts:91
 msgid "Rules that change the bed for you"
 msgstr ""
 
@@ -3038,7 +3038,7 @@ msgstr ""
 msgid "Scheduled"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:78
+#: src/components/Search/searchIndex.ts:79
 msgid "Scheduled jobs and drift"
 msgstr ""
 
@@ -3108,15 +3108,15 @@ msgstr ""
 msgid "Selected sessions: {0} / 60"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:73
+#: src/components/Search/searchIndex.ts:74
 msgid "Sensor baselines for piezo, capacitance and temperature"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:120
+#: src/components/Search/searchIndex.ts:121
 msgid "Sensor data source"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:76
+#: src/components/Search/searchIndex.ts:77
 msgid "Service health and the live sensor pipeline"
 msgstr ""
 
@@ -3172,11 +3172,11 @@ msgstr ""
 msgid "Show recent"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:134
+#: src/components/Search/searchIndex.ts:135
 msgid "Side name"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:140
+#: src/components/Search/searchIndex.ts:141
 msgid "Signal limits"
 msgstr ""
 
@@ -3190,6 +3190,10 @@ msgstr ""
 
 #: src/components/biometrics/Calibration/ShadowReport.tsx:17
 msgid "Simulated demo: generated readings, no hardware execution or qualification."
+msgstr ""
+
+#: src/components/Search/searchIndex.ts:50
+msgid "Sleep sessions that follow a temperature curve"
 msgstr ""
 
 #: src/components/biometrics/Calibration/CalibrationProfileCard.tsx:249
@@ -3228,7 +3232,7 @@ msgstr ""
 msgid "Smooth isolated epochs"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:141
+#: src/components/Search/searchIndex.ts:142
 msgid "Smoothing applied after the rules"
 msgstr ""
 
@@ -3236,7 +3240,7 @@ msgstr ""
 msgid "Snapshot hash"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:143
+#: src/components/Search/searchIndex.ts:144
 msgid "Software"
 msgstr ""
 
@@ -3260,7 +3264,7 @@ msgstr ""
 msgid "Source measurements deleted"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:102
+#: src/components/Search/searchIndex.ts:103
 msgid "SSH identity"
 msgstr ""
 
@@ -3297,7 +3301,7 @@ msgstr ""
 msgid "Stage replay unavailable"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:139
+#: src/components/Search/searchIndex.ts:140
 msgid "Stage rules"
 msgstr ""
 
@@ -3339,7 +3343,7 @@ msgstr ""
 msgid "Stop recorded"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:145
+#: src/components/Search/searchIndex.ts:146
 msgid "Storage used on the pod"
 msgstr ""
 
@@ -3376,31 +3380,31 @@ msgstr ""
 msgid "System defaults"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:74
+#: src/components/Search/searchIndex.ts:75
 msgid "Tables, sizes and maintenance for the pod databases"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:122
+#: src/components/Search/searchIndex.ts:123
 msgid "Tap gestures"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:122
+#: src/components/Search/searchIndex.ts:123
 msgid "Tap the top of the cover on your side"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:96
+#: src/components/Search/searchIndex.ts:97
 msgid "Temperature control"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:51
+#: src/components/Search/searchIndex.ts:52
 msgid "Temperature curves, power and alarms"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:111
+#: src/components/Search/searchIndex.ts:112
 msgid "Temperature unit"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:135
+#: src/components/Search/searchIndex.ts:136
 msgid "Temporarily pause a sleeper’s tracking and alarms"
 msgstr ""
 
@@ -3421,11 +3425,11 @@ msgstr ""
 msgid "The frozen offset of {clockOffsetMs} ms is added to recomputed timestamps in this overlay. Reference times stay unchanged. Point matching tolerance: {0} ms."
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:97
+#: src/components/Search/searchIndex.ts:98
 msgid "The full-screen bed on the Temp screen"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:102
+#: src/components/Search/searchIndex.ts:103
 msgid "The key the pod uses to reach your host"
 msgstr ""
 
@@ -3506,7 +3510,7 @@ msgstr ""
 msgid "The window IBI variability index is not clinical beat-to-beat RMSSD. Only compatible metric definitions and aggregation windows are scored."
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:98
+#: src/components/Search/searchIndex.ts:99
 msgid "Theme"
 msgstr ""
 
@@ -3602,7 +3606,7 @@ msgstr ""
 msgid "Time"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:112
+#: src/components/Search/searchIndex.ts:113
 msgid "Time format"
 msgstr ""
 
@@ -3616,7 +3620,7 @@ msgstr ""
 msgid "Times shown in {timezone}"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:110
+#: src/components/Search/searchIndex.ts:111
 msgid "Timezone"
 msgstr ""
 
@@ -3670,15 +3674,15 @@ msgstr ""
 msgid "Tuning"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:114
+#: src/components/Search/searchIndex.ts:115
 msgid "Turn sides off after a set number of hours"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:136
+#: src/components/Search/searchIndex.ts:137
 msgid "Turns a side off after you leave the bed"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:137
+#: src/components/Search/searchIndex.ts:138
 msgid "Turns a side on once you’ve settled into bed"
 msgstr ""
 
@@ -3706,7 +3710,7 @@ msgstr ""
 msgid "Unit: {0}; range: {1}–{2}; default: {3}; original: {4}"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:99
+#: src/components/Search/searchIndex.ts:100
 msgid "Units"
 msgstr ""
 
@@ -3724,7 +3728,7 @@ msgstr ""
 msgid "Unmatched references"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:144
+#: src/components/Search/searchIndex.ts:145
 msgid "Update channel"
 msgstr ""
 
@@ -3732,7 +3736,7 @@ msgstr ""
 msgid "Upload Apple Watch data to see how far this side's readings sit from the Watch, night by night."
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:129
+#: src/components/Search/searchIndex.ts:130
 msgid "URL, TLS, credentials and topic prefix"
 msgstr ""
 
@@ -3744,7 +3748,7 @@ msgstr ""
 msgid "Use the same sleeper identity as the reference records you intend to compare."
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:96
+#: src/components/Search/searchIndex.ts:97
 msgid "Used on the Temp screen of this device"
 msgstr ""
 
@@ -3811,15 +3815,15 @@ msgstr ""
 msgid "Waveform dataset retained: {published}"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:123
+#: src/components/Search/searchIndex.ts:124
 msgid "What a tap does to a ringing alarm"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:134
+#: src/components/Search/searchIndex.ts:135
 msgid "What each side is called"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:91
+#: src/components/Search/searchIndex.ts:92
 msgid "What the rules evaluated and why"
 msgstr ""
 
@@ -3831,23 +3835,23 @@ msgstr ""
 msgid "when"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:106
+#: src/components/Search/searchIndex.ts:107
 msgid "When the HRV index is reported"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:110
+#: src/components/Search/searchIndex.ts:111
 msgid "Where schedules and nights are anchored"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:120
+#: src/components/Search/searchIndex.ts:121
 msgid "Which firmware pipeline the pod reads"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:144
+#: src/components/Search/searchIndex.ts:145
 msgid "Which releases the pod installs"
 msgstr ""
 
-#: src/components/Search/searchIndex.ts:123
+#: src/components/Search/searchIndex.ts:124
 msgid "While an alarm is ringing"
 msgstr ""
 

@@ -11,7 +11,8 @@ import { usePodHealth } from './usePodHealth'
 /** Phone bottom tab bar (< 900px). Respects the safe-area inset. */
 export function TabBar({ className }: { className?: string }) {
   const hasBase = useBaseAvailable()
-  const items = NAV_ITEMS.filter(item => item.id !== 'base' || hasBase)
+  // Rules stays out of the phone bar so every tab fits. The Autopilot page links to it
+  const items = NAV_ITEMS.filter(item => item.id !== 'autopilot' && (item.id !== 'base' || hasBase))
   const pathname = usePathname()
   const lang = langFromPath(pathname)
   const active = activeNavId(pathname)

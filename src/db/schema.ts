@@ -410,6 +410,51 @@ export const runOnceSessions = sqliteTable('run_once_sessions', {
 ])
 
 // ============================================================================
+// Sleep sessions — manual sessions that follow a time-based temperature curve
+// ============================================================================
+
+export const sleepSessions = sqliteTable('sleep_sessions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  side: text('side', { enum: ['left', 'right'] }).notNull(),
+  startedAt: integer('started_at').notNull(), // unix seconds
+  endedAt: integer('ended_at'), // unix seconds, null while running
+  endReason: text('end_reason', { enum: ['manual', 'tap', 'api', 'out_of_bed', 'max_length'] }),
+  startSource: text('start_source', { enum: ['manual', 'tap', 'api'] }).notNull(),
+  isNap: integer('is_nap', { mode: 'boolean' }).notNull().default(false),
+  napRequested: integer('nap_requested', { mode: 'boolean' }).notNull().default(false),
+  wakeAt: integer('wake_at'), // unix seconds
+  dryRun: integer('dry_run', { mode: 'boolean' }).notNull().default(true),
+}, t => [
+  index('idx_sleep_sessions_side_started').on(t.side, t.startedAt),
+  index('idx_sleep_sessions_side_ended').on(t.side, t.endedAt),
+])
+
+export const sleepSessionDecisions = sqliteTable('sleep_session_decisions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  sessionId: integer('session_id').notNull().references(() => sleepSessions.id, { onDelete: 'cascade' }),
+  timestamp: integer('timestamp').notNull(), // unix seconds
+  stage: text('stage', { enum: ['entry', 'cooling', 'easing', 'steady', 'wake'] }).notNull(),
+  targetF: real('target_f').notNull(),
+  setF: real('set_f').notNull(),
+  reason: text('reason', { enum: ['schedule', 'room', 'wake', 'nap'] }).notNull(),
+  detail: text('detail'),
+  dryRun: integer('dry_run', { mode: 'boolean' }).notNull(),
+}, t => [
+  index('idx_sleep_session_decisions_session_time').on(t.sessionId, t.timestamp),
+])
+
+export const sleepSessionSettings = sqliteTable('sleep_session_settings', {
+  side: text('side', { enum: ['left', 'right'] }).primaryKey(),
+  settings: text('settings').notNull(), // JSON, validated by sessionSettingsSchema
+})
+
+// Pushed by a trusted room sensor, in 5-minute buckets
+export const sleepSessionRoomReadings = sqliteTable('sleep_session_room_readings', {
+  timestamp: integer('timestamp').primaryKey(), // unix seconds, start of the bucket
+  temperatureC: real('temperature_c').notNull(),
+})
+
+// ============================================================================
 // Autopilot — reactive automations (WHEN / IF / THEN rules engine)
 // ============================================================================
 

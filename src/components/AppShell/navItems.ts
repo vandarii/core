@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
-import { BedDouble, Calendar, Moon, Radio, Settings, Sparkles, Thermometer } from 'lucide-react'
+import { BedDouble, Calendar, Moon, Radio, Settings, Sparkles, Thermometer, Workflow } from 'lucide-react'
 
-export type NavId = 'temp' | 'base' | 'autopilot' | 'schedule' | 'sleep' | 'system' | 'settings'
+export type NavId = 'temp' | 'base' | 'sessions' | 'autopilot' | 'schedule' | 'sleep' | 'system' | 'settings'
 
 export interface NavItem {
   id: NavId
@@ -19,7 +19,8 @@ export const DOCS_URL = 'https://sleepypod.github.io/'
 export const NAV_ITEMS: NavItem[] = [
   { id: 'temp', label: 'Temp', icon: Thermometer, href: '/' },
   { id: 'base', label: 'Base', icon: BedDouble, href: '/base' },
-  { id: 'autopilot', label: 'Autopilot', icon: Sparkles, href: '/autopilot' },
+  { id: 'sessions', label: 'Autopilot', icon: Sparkles, href: '/sessions' },
+  { id: 'autopilot', label: 'Rules', icon: Workflow, href: '/autopilot' },
   { id: 'schedule', label: 'Schedule', icon: Calendar, href: '/schedule' },
   { id: 'sleep', label: 'Sleep', icon: Moon, href: '/sleep', aliases: ['/data'] },
   { id: 'system', label: 'System', icon: Radio, href: '/system', aliases: ['/sensors', '/debug', '/status'] },

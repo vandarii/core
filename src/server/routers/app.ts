@@ -13,6 +13,7 @@ import { calibrationRouter } from './calibration'
 import { waterLevelRouter } from './waterLevel'
 import { pumpAlertsRouter } from './pumpAlerts'
 import { runOnceRouter } from './runOnce'
+import { sleepSessionsRouter } from './sleepSessions'
 import { mqttRouter } from './mqtt'
 import { homekitRouter } from './homekit'
 import { archivePushRouter } from './archivePush'
@@ -46,6 +47,7 @@ export const appRouter = router({
   waterLevel: waterLevelRouter,
   pumpAlerts: pumpAlertsRouter,
   runOnce: runOnceRouter,
+  sleepSessions: sleepSessionsRouter,
   mqtt: mqttRouter,
   homekit: homekitRouter,
   archivePush: archivePushRouter,

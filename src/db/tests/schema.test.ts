@@ -424,6 +424,58 @@ const expectedTables: Record<string, TableSpec> = {
       { name: 'idx_run_once_side_status', unique: false, columns: ['side', 'status'] },
     ],
   },
+  sleepSessions: {
+    name: 'sleep_sessions',
+    columns: [
+      { name: 'id', notNull: true, default: 'fn' },
+      { name: 'side', notNull: true, default: undefined },
+      { name: 'started_at', notNull: true, default: undefined },
+      { name: 'ended_at', notNull: false, default: undefined },
+      { name: 'end_reason', notNull: false, default: undefined },
+      { name: 'start_source', notNull: true, default: undefined },
+      { name: 'is_nap', notNull: true, default: false },
+      { name: 'nap_requested', notNull: true, default: false },
+      { name: 'wake_at', notNull: false, default: undefined },
+      { name: 'dry_run', notNull: true, default: true },
+    ],
+    indexes: [
+      { name: 'idx_sleep_sessions_side_ended', unique: false, columns: ['side', 'ended_at'] },
+      { name: 'idx_sleep_sessions_side_started', unique: false, columns: ['side', 'started_at'] },
+    ],
+  },
+  sleepSessionDecisions: {
+    name: 'sleep_session_decisions',
+    columns: [
+      { name: 'id', notNull: true, default: 'fn' },
+      { name: 'session_id', notNull: true, default: undefined },
+      { name: 'timestamp', notNull: true, default: undefined },
+      { name: 'stage', notNull: true, default: undefined },
+      { name: 'target_f', notNull: true, default: undefined },
+      { name: 'set_f', notNull: true, default: undefined },
+      { name: 'reason', notNull: true, default: undefined },
+      { name: 'detail', notNull: false, default: undefined },
+      { name: 'dry_run', notNull: true, default: undefined },
+    ],
+    indexes: [
+      { name: 'idx_sleep_session_decisions_session_time', unique: false, columns: ['session_id', 'timestamp'] },
+    ],
+  },
+  sleepSessionSettings: {
+    name: 'sleep_session_settings',
+    columns: [
+      { name: 'side', notNull: true, default: undefined },
+      { name: 'settings', notNull: true, default: undefined },
+    ],
+    indexes: [],
+  },
+  sleepSessionRoomReadings: {
+    name: 'sleep_session_room_readings',
+    columns: [
+      { name: 'timestamp', notNull: true, default: 'fn' },
+      { name: 'temperature_c', notNull: true, default: undefined },
+    ],
+    indexes: [],
+  },
   automations: {
     name: 'automations',
     columns: [

@@ -77,6 +77,15 @@ describe('responsive navigation', () => {
     rerender(<Navigation />)
     expect(screen.queryByRole('link', { name: /^base$/i })).toBeNull()
   })
+  it('nests Sleep and Settings under Autopilot', () => {
+    Object.assign(state, { path: '/de/sessions', query: 'view=settings' })
+    render(<Sidebar />, { wrapper })
+    const links = screen.getAllByRole('link')
+    const current = links.find(link => link.getAttribute('aria-current') === 'page')
+    expect(current?.getAttribute('href')).toBe('/de/sessions?view=settings')
+    expect(links.some(link => link.getAttribute('href') === '/de/sessions' && link.textContent === 'Sleep')).toBe(true)
+  })
+
   it('puts the search box above Temp with the shortcut hint', () => {
     render(<Sidebar />, { wrapper })
     const search = screen.getByRole('button', { name: 'Search' })
