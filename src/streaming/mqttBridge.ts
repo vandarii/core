@@ -174,6 +174,8 @@ interface BridgeState {
   resolved: ResolvedMqttConfig | null
   messagesPublished: number
   lastPublishAt: Date | null
+  /** Control fields of the last climate publish, so status frames only republish on a change. */
+  climateSignature: string | null
 }
 
 const state: BridgeState = {
@@ -185,6 +187,7 @@ const state: BridgeState = {
   resolved: null,
   messagesPublished: 0,
   lastPublishAt: null,
+  climateSignature: null,
 }
 
 export interface BridgeStatus {
@@ -505,6 +508,58 @@ function publishHaDiscovery(): void {
 // State publication
 // ---------------------------------------------------------------------------
 
+type DeviceStateRow = typeof deviceState.$inferSelect
+
+/** Ignores currentTemperature, which drifts constantly and can wait for the periodic publish. */
+function climateSignature(rows: DeviceStateRow[]): string {
+  return rows
+    .map(row => `${row.side}:${row.isPowered}:${row.targetTemperature}:${row.isAlarmVibrating}`)
+    .sort()
+    .join('|')
+}
+
+async function publishClimate(): Promise<void> {
+  if (!state.client?.connected) return
+
+  try {
+    // Read device_state last so overlapping calls can't publish an older row after a newer one.
+    const mattressF = await mattressTempsF()
+    const sides = await db.select().from(deviceState)
+    state.climateSignature = climateSignature(sides)
+    for (const row of sides) {
+      const mode = row.isPowered ? 'auto' : 'off'
+      safePublish(topic('state', row.side, 'climate'), JSON.stringify({
+        ts: row.lastUpdated.getTime(),
+        currentTemperature: row.isPowered
+          ? row.currentTemperature
+          : mattressF[row.side] ?? row.currentTemperature,
+        targetTemperature: row.targetTemperature,
+        isPowered: row.isPowered,
+        isAlarmVibrating: row.isAlarmVibrating,
+        mode,
+        action: climateAction(row),
+        waterLevel: row.waterLevel,
+      }), RETAINED_QOS_0)
+    }
+  }
+  catch (err) {
+    console.warn('[mqtt] device_state publish failed:', err instanceof Error ? err.message : err)
+  }
+}
+
+/** Catches changes made outside MQTT (web UI, schedules, the Pod itself) on the next status frame. */
+async function publishClimateIfChanged(): Promise<void> {
+  try {
+    const sides = await db.select().from(deviceState)
+    if (climateSignature(sides) === state.climateSignature) return
+  }
+  catch (err) {
+    console.warn('[mqtt] device_state read failed:', err instanceof Error ? err.message : err)
+    return
+  }
+  await publishClimate()
+}
+
 async function publishState(): Promise<void> {
   if (!state.client?.connected) return
 
@@ -527,28 +582,7 @@ async function publishState(): Promise<void> {
     }), RETAINED_QOS_0)
   }
 
-  try {
-    const sides = await db.select().from(deviceState)
-    const mattressF = await mattressTempsF()
-    for (const row of sides) {
-      const mode = row.isPowered ? 'auto' : 'off'
-      safePublish(topic('state', row.side, 'climate'), JSON.stringify({
-        ts: row.lastUpdated.getTime(),
-        currentTemperature: row.isPowered
-          ? row.currentTemperature
-          : mattressF[row.side] ?? row.currentTemperature,
-        targetTemperature: row.targetTemperature,
-        isPowered: row.isPowered,
-        isAlarmVibrating: row.isAlarmVibrating,
-        mode,
-        action: climateAction(row),
-        waterLevel: row.waterLevel,
-      }), RETAINED_QOS_0)
-    }
-  }
-  catch (err) {
-    console.warn('[mqtt] device_state publish failed:', err instanceof Error ? err.message : err)
-  }
+  await publishClimate()
 
   for (const side of ['left', 'right'] as const) {
     try {
@@ -847,7 +881,8 @@ export async function startMqttBridge(): Promise<void> {
     if (!incomingTopic.startsWith(cmdPrefix)) return
     const verb = incomingTopic.slice(cmdPrefix.length)
     const parsed = parsePayload(payload)
-    void handleCommand(verb, parsed).catch((err) => {
+    // HA's climate entity waits for reported state, so publish as soon as the command lands.
+    void handleCommand(verb, parsed).then(publishClimate).catch((err) => {
       console.warn(`[mqtt] command ${verb} failed:`, err instanceof Error ? err.message : err)
     })
   })
@@ -856,18 +891,20 @@ export async function startMqttBridge(): Promise<void> {
     void publishState()
   }, STATE_PUBLISH_INTERVAL_MS)
 
-  // React to live status frames so HA sees temperature changes immediately
-  // rather than waiting for the periodic re-publish.
+  // React to live status frames so HA sees changes immediately rather than
+  // waiting for the periodic re-publish.
   state.unsubscribeFrame = onServerFrame((frame) => {
     if (frame.type !== 'deviceStatus') return
     if (!state.client?.connected) return
     safePublish(topic('state', 'device-status'), JSON.stringify(frame), RETAINED_QOS_0)
+    void publishClimateIfChanged()
   })
 }
 
 export async function shutdownMqttBridge(): Promise<void> {
   if (state.runState === 'stopped' && !state.client) return
   console.log('[mqtt] shutting down…')
+  state.climateSignature = null
 
   if (state.publishTimer) {
     clearInterval(state.publishTimer)

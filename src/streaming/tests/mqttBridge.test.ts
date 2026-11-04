@@ -1365,6 +1365,81 @@ describe('mqttBridge — periodic publish + shutdown edges', () => {
   })
 })
 
+describe('mqttBridge — immediate climate publishes', () => {
+  const climateRow = (isPowered: boolean) => ({
+    side: 'left',
+    currentTemperature: 70,
+    targetTemperature: isPowered ? 72 : null,
+    isPowered,
+    isAlarmVibrating: false,
+    waterLevel: 'ok',
+    lastUpdated: new Date('2026-01-01T00:00:00Z'),
+  })
+  const climatePublishes = (fake: Awaited<ReturnType<typeof startBridgeWithFake>>) =>
+    fake.publish.mock.calls
+      .filter(([t]) => (t as string).endsWith('/state/left/climate'))
+      .map(([, payload]) => JSON.parse(payload as string))
+  const settle = async () => {
+    for (let i = 0; i < 5; i++) await new Promise(r => setTimeout(r, 0))
+  }
+  const startConnected = async () => {
+    const fake = await startBridgeWithFake()
+    fake.connected = true
+    fake.emit('connect')
+    await settle()
+    fake.publish.mockClear()
+    return fake
+  }
+
+  it('publishes the new climate state as soon as a command finishes', async () => {
+    dbMock.state.deviceStateRows = [climateRow(false)]
+    const fake = await startConnected()
+
+    dbMock.state.deviceStateRows = [climateRow(true)]
+    fake.emit('message', `sleepypod/${deviceId()}/cmd/set-power`, Buffer.from(JSON.stringify({ side: 'left', powered: true })))
+
+    await vi.waitFor(() => expect(climatePublishes(fake).at(-1)).toMatchObject({ mode: 'auto', isPowered: true }))
+    await shutdownMqttBridge()
+  })
+
+  it('does not publish climate state when a command fails', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    dbMock.state.deviceStateRows = [climateRow(false)]
+    const fake = await startConnected()
+
+    deviceMock.setPower.mockRejectedValueOnce(new Error('hardware down'))
+    fake.emit('message', `sleepypod/${deviceId()}/cmd/set-power`, Buffer.from(JSON.stringify({ side: 'left', powered: true })))
+    await vi.waitFor(() => expect(warn).toHaveBeenCalled())
+
+    expect(climatePublishes(fake)).toHaveLength(0)
+    warn.mockRestore()
+    await shutdownMqttBridge()
+  })
+
+  it('publishes climate state on a status frame when power changed outside MQTT', async () => {
+    dbMock.state.deviceStateRows = [climateRow(true)]
+    const fake = await startConnected()
+
+    dbMock.state.deviceStateRows = [climateRow(false)]
+    piezoMock.state.listener?.({ type: 'deviceStatus' })
+
+    await vi.waitFor(() => expect(climatePublishes(fake).at(-1)).toMatchObject({ mode: 'off', isPowered: false }))
+    await shutdownMqttBridge()
+  })
+
+  it('skips climate publishes on status frames when nothing changed', async () => {
+    dbMock.state.deviceStateRows = [climateRow(true)]
+    const fake = await startConnected()
+
+    dbMock.state.deviceStateRows = [{ ...climateRow(true), currentTemperature: 71 }]
+    piezoMock.state.listener?.({ type: 'deviceStatus' })
+    await settle()
+
+    expect(climatePublishes(fake)).toHaveLength(0)
+    await shutdownMqttBridge()
+  })
+})
+
 describe('mqttBridge — publishState DB failures', () => {
   it('does not report query failures when optional state tables have no rows yet', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})

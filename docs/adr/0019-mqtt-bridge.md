@@ -119,7 +119,8 @@ On `connect` we publish retained discovery payloads under
   (`off|idle|heating|cooling`). Current temperature is the water reading
   while powered and the mattress average while off, because an off side's
   water sensor follows the shared heatsink. Command topics round-trip through `cmd/set-temperature` and
-  `cmd/set-power`.
+  `cmd/set-power`. State is published right after a command, and on a status
+  frame when power, target or alarm changed; otherwise every 30 s.
 - `sensor` for water level, per-side heart rate, breathing rate, HRV.
 - `sensor` for ambient temperature (°C, `device_class: temperature`) and
   ambient humidity (%, `device_class: humidity`), both reading the latest
