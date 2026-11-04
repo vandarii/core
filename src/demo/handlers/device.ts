@@ -68,6 +68,7 @@ function sideStatus(side: Side, unit: 'F' | 'C') {
   const cur = s.powered ? currentF(s) : null
   return {
     currentTemperature: cur === null ? null : conv(cur),
+    mattressTemperature: cur === null ? null : conv(cur),
     targetTemperature: s.powered ? conv(s.targetF) : null,
     currentLevel: cur === null ? 0 : toLevel(cur),
     targetLevel: s.powered ? toLevel(s.targetF) : 0,

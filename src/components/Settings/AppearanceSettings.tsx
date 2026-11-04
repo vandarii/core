@@ -148,6 +148,7 @@ function StepperPreview({ display }: { display: TempDisplay }) {
         display={display}
         targetF={81}
         bedF={80}
+        waterF={80}
         isOn
         nowDisabled
         onStepNow={() => {}}

@@ -19,17 +19,17 @@ describe('temperature ramp', () => {
 
 describe('side status', () => {
   it('reads OFF, HOLDING within half a degree, else COOLING or WARMING', () => {
-    expect(sideStatus({ on: false, targetF: 72, bedF: 80 }, 'F', 'degrees').text).toBe('OFF')
-    expect(sideStatus({ on: true, targetF: 72, bedF: 72.4 }, 'F', 'degrees').text).toBe('HOLDING')
-    expect(sideStatus({ on: true, targetF: 72, bedF: null }, 'F', 'degrees').word).toBe('HOLDING')
-    expect(sideStatus({ on: true, targetF: 72, bedF: 80 }, 'F', 'degrees')).toEqual({ word: 'COOLING', text: 'COOLING', color: STAGE.cooling })
-    expect(sideStatus({ on: true, targetF: 90, bedF: 80 }, 'F', 'degrees')).toEqual({ word: 'WARMING', text: 'WARMING', color: STAGE.warming })
+    expect(sideStatus({ on: false, targetF: 72, waterF: 80 }, 'F', 'degrees').text).toBe('OFF')
+    expect(sideStatus({ on: true, targetF: 72, waterF: 72.4 }, 'F', 'degrees').text).toBe('HOLDING')
+    expect(sideStatus({ on: true, targetF: 72, waterF: null }, 'F', 'degrees').word).toBe('HOLDING')
+    expect(sideStatus({ on: true, targetF: 72, waterF: 80 }, 'F', 'degrees')).toEqual({ word: 'COOLING', text: 'COOLING', color: STAGE.cooling })
+    expect(sideStatus({ on: true, targetF: 90, waterF: 80 }, 'F', 'degrees')).toEqual({ word: 'WARMING', text: 'WARMING', color: STAGE.warming })
   })
   it('describes the schedule while previewing, in the temperature colour', () => {
-    expect(sideStatus({ on: true, targetF: 72, bedF: 80 }, 'F', 'degrees', 79)).toEqual({ word: 'SCHEDULED', text: 'SCHEDULED 79°', color: STAGE.preview })
-    expect(sideStatus({ on: true, targetF: 72, bedF: 80 }, 'F', 'degrees', 80.5).color).not.toBe(tempColor(80.5))
-    expect(sideStatus({ on: true, targetF: 72, bedF: 80 }, 'C', 'degrees', 79).text).toBe('SCHEDULED 26°')
-    expect(sideStatus({ on: true, targetF: 72, bedF: 80 }, 'F', 'degrees', null).text).toBe('OFF')
+    expect(sideStatus({ on: true, targetF: 72, waterF: 80 }, 'F', 'degrees', 79)).toEqual({ word: 'SCHEDULED', text: 'SCHEDULED 79°', color: STAGE.preview })
+    expect(sideStatus({ on: true, targetF: 72, waterF: 80 }, 'F', 'degrees', 80.5).color).not.toBe(tempColor(80.5))
+    expect(sideStatus({ on: true, targetF: 72, waterF: 80 }, 'C', 'degrees', 79).text).toBe('SCHEDULED 26°')
+    expect(sideStatus({ on: true, targetF: 72, waterF: 80 }, 'F', 'degrees', null).text).toBe('OFF')
   })
 })
 

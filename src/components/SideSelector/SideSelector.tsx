@@ -40,7 +40,7 @@ export const SideSelector = ({ overrides, className }: {
         unit={unit}
         loaded={sideStatus != null}
         targetF={override?.targetF ?? sideStatus?.targetTemperature ?? 80}
-        bedF={sideStatus?.currentTemperature ?? null}
+        waterF={sideStatus?.currentTemperature ?? null}
         isOn={override?.isOn ?? (sideStatus?.targetLevel ?? 0) !== 0}
         onSelect={() => selectSide(side)}
       />
@@ -67,17 +67,17 @@ export const SideSelector = ({ overrides, className }: {
   )
 }
 
-function SideTab({ label, selected, unit, loaded, targetF, bedF, isOn, onSelect }: {
+function SideTab({ label, selected, unit, loaded, targetF, waterF, isOn, onSelect }: {
   label: string
   selected: boolean
   unit: TempUnit
   loaded: boolean
   targetF: number
-  bedF: number | null
+  waterF: number | null
   isOn: boolean
   onSelect: () => void
 }) {
-  const accent = ACCENT_VAR[directionFor(targetF, bedF)]
+  const accent = ACCENT_VAR[directionFor(targetF, waterF)]
   const sub = !loaded
     ? '—'
     : isOn

@@ -23,6 +23,7 @@ import { DacMonitor } from './dacMonitor'
 import { GestureActionHandler } from './gestureActionHandler'
 import { GestureDispatcher, tapGestureEvent } from './gestureDispatch'
 import { defaultGestureActionDeps } from './gestureActionHandler.deps'
+import { getDeviceEnrichment, peekMattressTempsF } from './deviceEnrichment'
 import { DeviceStateSync, getAlarmState } from './deviceStateSync'
 import { trackPrimingState, resetPrimingState, getPrimeCompletedAt } from './primeNotification'
 import { PumpLogRecorder } from './pumpLogRecorder'
@@ -115,9 +116,11 @@ export const getDacMonitor = async (): Promise<DacMonitor> => {
 
         // Broadcast device status to WebSocket clients
         // Dynamic import to avoid circular dependency (piezoStream is started separately)
+        void getDeviceEnrichment() // Keeps the mattress reading below fresh; shared 2s cache.
         import('../streaming/piezoStream').then(({ broadcastFrame }) => {
           const primeCompletedAt = getPrimeCompletedAt()
           const alarmState = getAlarmState()
+          const mattressF = peekMattressTempsF()
           const stallNotices = getAllPumpStallNotices()
           broadcastFrame({
             type: 'deviceStatus',
@@ -125,8 +128,8 @@ export const getDacMonitor = async (): Promise<DacMonitor> => {
             ts: Date.now(),
             // A poll can still report the pre-command target right after a
             // mutation; keep the mutation's target until the firmware agrees.
-            leftSide: { ...applyMutationOverlay('left', { ...status.leftSide }), isAlarmVibrating: alarmState.left },
-            rightSide: { ...applyMutationOverlay('right', { ...status.rightSide }), isAlarmVibrating: alarmState.right },
+            leftSide: { ...applyMutationOverlay('left', { ...status.leftSide }), mattressTemperature: mattressF.left, isAlarmVibrating: alarmState.left },
+            rightSide: { ...applyMutationOverlay('right', { ...status.rightSide }), mattressTemperature: mattressF.right, isAlarmVibrating: alarmState.right },
             waterLevel: status.waterLevel,
             isPriming: status.isPriming,
             ...(primeCompletedAt && { primeCompletedNotification: { timestamp: primeCompletedAt } }),

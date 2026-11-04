@@ -2191,7 +2191,7 @@ describe('mqttBridge — publishState payload contents (mutation coverage)', () 
     const { map } = await capture()
     expect(JSON.parse(map[`sleepypod/${ID}/state/left/climate`])).toEqual({
       ts: new Date('2026-01-01T00:00:00Z').getTime(),
-      currentTemperature: 70,
+      currentTemperature: null,
       targetTemperature: 72,
       isPowered: true,
       isAlarmVibrating: false,
@@ -2201,7 +2201,7 @@ describe('mqttBridge — publishState payload contents (mutation coverage)', () 
     })
     expect(JSON.parse(map[`sleepypod/${ID}/state/right/climate`])).toEqual({
       ts: new Date('2026-01-02T00:00:00Z').getTime(),
-      currentTemperature: 68,
+      currentTemperature: null,
       targetTemperature: 66,
       isPowered: false,
       isAlarmVibrating: true,
@@ -2246,10 +2246,10 @@ describe('mqttBridge — publishState payload contents (mutation coverage)', () 
     const current = (map: Record<string, string>, side: string) =>
       JSON.parse(map[`sleepypod/${ID}/state/${side}/climate`]).currentTemperature
 
-    it('uses the mattress for an off side and the water for a powered side', async () => {
+    it('reports the mattress for off and powered sides alike', async () => {
       const { map } = await capture(rows, bed(60_000, [2400, 2500, 2600]))
       expect(current(map, 'left')).toBe(77)
-      expect(current(map, 'right')).toBe(68)
+      expect(current(map, 'right')).toBe(73.4)
       await shutdownMqttBridge()
     })
 
@@ -2259,22 +2259,22 @@ describe('mqttBridge — publishState payload contents (mutation coverage)', () 
       await shutdownMqttBridge()
     })
 
-    it('falls back to the water reading when every mattress sensor is missing', async () => {
+    it('reports nothing rather than the water when every mattress sensor is missing', async () => {
       const { map } = await capture(rows, bed(60_000, [null, null, null]))
-      expect(current(map, 'left')).toBe(106)
+      expect(current(map, 'left')).toBeNull()
       await shutdownMqttBridge()
     })
 
-    it('falls back to the water reading when the mattress data is stale', async () => {
+    it('reports nothing rather than the water when the mattress data is stale', async () => {
       const { map } = await capture(rows, bed(6 * 60_000, [2400, 2500, 2600]))
-      expect(current(map, 'left')).toBe(106)
+      expect(current(map, 'left')).toBeNull()
       await shutdownMqttBridge()
     })
 
-    it('falls back to the water reading when the mattress read fails', async () => {
+    it('reports nothing rather than the water when the mattress read fails', async () => {
       dbMock.state.throwOnBedTemp = true
       const { map } = await capture(rows)
-      expect(current(map, 'left')).toBe(106)
+      expect(current(map, 'left')).toBeNull()
       await shutdownMqttBridge()
     })
   })

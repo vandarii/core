@@ -65,7 +65,8 @@ export interface SideStatus {
 export interface SideReading {
   on: boolean
   targetF: number
-  bedF: number | null
+  /** The bed lags the water, so this decides the direction. */
+  waterF: number | null
 }
 
 /**
@@ -79,8 +80,8 @@ export function sideStatus(side: SideReading, unit: TempUnit, display: TempDispl
     return { word: 'SCHEDULED', text: `SCHEDULED ${formatStageTemp(previewF, unit, display)}`, color: STAGE.preview }
   }
   if (!side.on) return { word: 'OFF', text: 'OFF', color: STAGE.text2 }
-  if (side.bedF == null || Math.abs(side.targetF - side.bedF) < 0.5) return { word: 'HOLDING', text: 'HOLDING', color: STAGE.text2 }
-  return side.targetF < side.bedF
+  if (side.waterF == null || Math.abs(side.targetF - side.waterF) < 0.5) return { word: 'HOLDING', text: 'HOLDING', color: STAGE.text2 }
+  return side.targetF < side.waterF
     ? { word: 'COOLING', text: 'COOLING', color: STAGE.cooling }
     : { word: 'WARMING', text: 'WARMING', color: STAGE.warming }
 }

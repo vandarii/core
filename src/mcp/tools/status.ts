@@ -18,7 +18,10 @@ export async function buildPodStatus(requestedUnit: 'F' | 'C' | undefined) {
     // The router converts side temperatures but leaves the controller's target in °F.
     const control = status.temperatureControl?.[s]
     return {
-      currentTemperature: status[key].currentTemperature,
+      /** Measured mattress surface. */
+      mattressTemperature: status[key].mattressTemperature,
+      /** Water at the Hub, from the firmware's heat level; not the bed. */
+      waterTemperature: status[key].currentTemperature,
       targetTemperature: status[key].targetTemperature,
       powered: status[key].targetLevel !== 0,
       alarmVibrating: status[key].isAlarmVibrating ?? false,

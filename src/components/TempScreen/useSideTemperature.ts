@@ -8,6 +8,7 @@ import type { Side } from '@/src/providers/SideProvider'
 
 interface SideStatus {
   currentTemperature: number | null
+  mattressTemperature?: number | null
   targetTemperature: number | null
   targetLevel: number
 }
@@ -16,8 +17,10 @@ export interface SideTemperature {
   side: Side
   /** Optimistic target set point, °F. */
   targetF: number
-  /** Current bed temperature, °F (null until the pod reports one). */
+  /** Measured mattress temperature, °F (null while the surface sensors are missing or stale). */
   bedF: number | null
+  /** Water temperature, °F. The bed lags it, so this alone decides warming vs cooling. */
+  waterF: number | null
   isOn: boolean
   tempPending: boolean
   powerPending: boolean
@@ -104,7 +107,8 @@ export function useSideTemperature(
   return {
     side,
     targetF: targetOpt.value,
-    bedF: sideStatus?.currentTemperature ?? null,
+    bedF: sideStatus?.mattressTemperature ?? null,
+    waterF: sideStatus?.currentTemperature ?? null,
     isOn: powerOpt.value,
     tempPending: setTempMutation.isPending,
     powerPending: setPowerMutation.isPending,

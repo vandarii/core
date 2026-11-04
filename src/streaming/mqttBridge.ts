@@ -42,7 +42,8 @@ import { deviceSettings, deviceState } from '@/src/db/schema'
 import { bedTemp, flowReadings, vitals } from '@/src/db/biometrics-schema'
 import { getPumpStallNotice } from '@/src/hardware/pumpStallNotification'
 import { FLOW_SOURCE_LOG } from '@/src/lib/pumpLog'
-import { centiDegreesToC, centiDegreesToF, centiPercentToPercent } from '@/src/lib/tempUtils'
+import { type MattressTempsF, mattressTempsFromRow } from '@/src/hardware/deviceEnrichment'
+import { centiDegreesToC, centiPercentToPercent } from '@/src/lib/tempUtils'
 import { onServerFrame } from './piezoStream'
 import { getDacMonitorIfRunning } from '@/src/hardware/dacMonitor.instance'
 
@@ -58,7 +59,6 @@ const TEST_CONNECT_TIMEOUT_MS = 5_000
 // Within this many °F of target, HA shows the side as idle rather than heating or cooling.
 const CLIMATE_IDLE_BAND_F = 1
 // bed_temp is written about once a minute. Older than this means the monitor has stalled.
-const MATTRESS_MAX_AGE_MS = 5 * 60_000
 
 export type ConfigSource = 'db' | 'env' | 'default'
 
@@ -281,13 +281,8 @@ function climateAction(row: {
   return gap > 0 ? 'heating' : 'cooling'
 }
 
-/**
- * Latest mattress temperature per side in °F, or null when it is missing or stale.
- * An off side's water reading follows the shared heatsink, not the bed: with the
- * pump stopped it reached 42 °C while the mattress stayed near 24 °C.
- */
-async function mattressTempsF(): Promise<Record<'left' | 'right', number | null>> {
-  const none = { left: null, right: null }
+/** Read fresh rather than through the enrichment cache: this publishes retained state. */
+async function mattressTempsF(): Promise<MattressTempsF> {
   try {
     const [latest] = await biometricsDb
       .select({
@@ -302,21 +297,11 @@ async function mattressTempsF(): Promise<Record<'left' | 'right', number | null>
       .from(bedTemp)
       .orderBy(desc(bedTemp.timestamp))
       .limit(1)
-    if (!latest || Date.now() - latest.timestamp.getTime() > MATTRESS_MAX_AGE_MS) return none
-    const meanF = (temps: (number | null)[]) => {
-      const present = temps.filter(t => t != null)
-      if (present.length === 0) return null
-      const mean = present.reduce((sum, t) => sum + t, 0) / present.length
-      return Math.round(centiDegreesToF(mean) * 10) / 10
-    }
-    return {
-      left: meanF([latest.leftOuterTemp, latest.leftCenterTemp, latest.leftInnerTemp]),
-      right: meanF([latest.rightOuterTemp, latest.rightCenterTemp, latest.rightInnerTemp]),
-    }
+    return mattressTempsFromRow(latest)
   }
   catch (err) {
     console.warn('[mqtt] mattress temperature read failed:', err instanceof Error ? err.message : err)
-    return none
+    return mattressTempsFromRow(undefined)
   }
 }
 
@@ -530,9 +515,8 @@ async function publishClimate(): Promise<void> {
       const mode = row.isPowered ? 'auto' : 'off'
       safePublish(topic('state', row.side, 'climate'), JSON.stringify({
         ts: row.lastUpdated.getTime(),
-        currentTemperature: row.isPowered
-          ? row.currentTemperature
-          : mattressF[row.side] ?? row.currentTemperature,
+        // Never the water reading: HA shows this as the bed. climateAction still uses the water.
+        currentTemperature: mattressF[row.side],
         targetTemperature: row.targetTemperature,
         isPowered: row.isPowered,
         isAlarmVibrating: row.isAlarmVibrating,

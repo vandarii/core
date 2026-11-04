@@ -8,7 +8,7 @@ vi.mock('@/src/db', () => ({
   },
 }))
 
-import { getDeviceEnrichment } from '../deviceEnrichment'
+import { getDeviceEnrichment, mattressTempsFromRow } from '../deviceEnrichment'
 
 let now = 0
 const timestamp = new Date('2026-09-05T12:00:00Z')
@@ -76,6 +76,17 @@ describe('device enrichment cache', () => {
     expect(dbMock.query).toHaveBeenCalledTimes(4)
   })
 
+  it('averages each side\'s reporting surface sensors and rejects stale rows', () => {
+    const row = {
+      timestamp: new Date(),
+      leftOuterTemp: 2400, leftCenterTemp: null, leftInnerTemp: 2600,
+      rightOuterTemp: null, rightCenterTemp: null, rightInnerTemp: null,
+    }
+    expect(mattressTempsFromRow(row)).toEqual({ left: 77, right: null })
+    expect(mattressTempsFromRow({ ...row, timestamp: new Date(Date.now() - 6 * 60_000) })).toEqual({ left: null, right: null })
+    expect(mattressTempsFromRow(undefined)).toEqual({ left: null, right: null })
+  })
+
   it('replaces expired readings with nulls when both queries fail', async () => {
     dbMock.query.mockResolvedValueOnce([climate]).mockResolvedValueOnce([water])
     await getDeviceEnrichment()
@@ -83,6 +94,7 @@ describe('device enrichment cache', () => {
     dbMock.query.mockRejectedValue(new Error('database unavailable'))
 
     expect(await getDeviceEnrichment()).toEqual({
+      mattressF: { left: null, right: null },
       roomClimate: { temperatureC: null, humidity: null, timestamp: null },
       waterLevelRaw: { raw: null, calibratedEmpty: null, calibratedFull: null, timestamp: null },
     })

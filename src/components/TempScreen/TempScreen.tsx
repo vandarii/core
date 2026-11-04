@@ -258,6 +258,7 @@ export const TempScreen = () => {
               unit={unit}
               targetF={c.targetF}
               bedF={c.bedF}
+              waterF={c.waterF}
               isOn={c.isOn}
               paused={blocked[side]}
               stepDisabled={!c.isOn || blocked[side]}

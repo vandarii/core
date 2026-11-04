@@ -201,7 +201,7 @@ describe('sleepypod MCP server', () => {
     expect(result.isError).toBeFalsy()
     expect(parse(result)).toMatchObject({
       unit: 'F',
-      left: { currentTemperature: 70, targetTemperature: 72, powered: true, temperatureControl: { owner: 'manual', targetTemperature: 72 } },
+      left: { waterTemperature: 70, targetTemperature: 72, powered: true, temperatureControl: { owner: 'manual', targetTemperature: 72 } },
       right: { powered: false },
       waterLevel: 'ok',
       wifi: { ssid: 'home', strength: -50 },

@@ -7,6 +7,10 @@ const shouldBlock = vi.fn<() => boolean>().mockReturnValue(false)
 
 // Test HomeKit's staging, serialization, and error mapping at the shared
 // controller boundary. Controller/hardware integration has its own real-DB tests.
+const enrichment = vi.hoisted(() => ({ mattressF: { left: null as number | null, right: null as number | null } }))
+vi.mock('@/src/hardware/deviceEnrichment', () => ({
+  getDeviceEnrichment: vi.fn(async () => enrichment),
+}))
 vi.mock('@/src/temperature/instance', () => ({
   getTemperatureController: () => ({
     setManualLocked: setTemperature,
@@ -278,8 +282,23 @@ describe('thermostat accessory', () => {
     expect(typeof captured).toBe('function')
     const updateSpy = vi.spyOn(service, 'updateCharacteristic')
     if (captured) (captured as (s: DeviceStatus) => void)(status)
-    // Four updates: CurrentTemp, TargetTemp, TargetHeatingCoolingState, CurrentHeatingCoolingState
-    expect(updateSpy.mock.calls.length).toBeGreaterThanOrEqual(4)
+    // Three synchronous updates: TargetTemp, TargetHeatingCoolingState, CurrentHeatingCoolingState
+    expect(updateSpy.mock.calls.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('reports the measured mattress, not the water, and keeps it when the sensors go stale', async () => {
+    enrichment.mattressF.left = 75.2
+    const monitor = { on: vi.fn(), getLastStatus: () => status } as unknown as DacMonitor
+    const { service } = buildThermostatService('left', monitor)
+    const current = service.getCharacteristic(Characteristic.CurrentTemperature)
+    // HAP snaps to 0.5° steps counted from minValue.
+    await vi.waitFor(async () => expect(await current.handleGetRequest()).toBeCloseTo(24, 0))
+
+    enrichment.mattressF.left = null
+    const onStatus = vi.mocked(monitor.on).mock.calls.find(([evt]) => evt === 'status:updated')?.[1] as (s: DeviceStatus) => void
+    onStatus(status)
+    await Promise.resolve()
+    expect(await current.handleGetRequest()).toBeCloseTo(24, 0)
   })
 
   it('stop() unsubscribes the status listener', () => {

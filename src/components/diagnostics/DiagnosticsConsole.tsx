@@ -88,7 +88,7 @@ function ThermalSideCard({ side: s }: { side: ThermalSide }) {
       {s.note && <p className="text-xs text-danger">{s.note}</p>}
       <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
         <KeyValue label="Target" value={s.isPowered ? fmtF(s.targetTempF) : 'off'} />
-        <KeyValue label="Bed" value={fmtF(s.currentTempF)} />
+        <KeyValue label="Water" value={fmtF(s.currentTempF)} />
         <KeyValue label="Pump · rpm" value={s.pumpRpm == null ? '—' : s.pumpRpm.toLocaleString()} />
         <KeyValue label="Water" value={fmtF(s.waterTempF)} />
         <KeyValue label="Surface" value={fmtF(s.bedSurfaceTempF)} />

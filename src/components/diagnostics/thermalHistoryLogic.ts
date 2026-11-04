@@ -28,8 +28,8 @@ export const THERMAL_PANELS: PanelDef[] = [
     kind: 'temp',
     height: 150,
     series: [
-      { key: 'leftBed', side: 'left', label: 'bed' },
-      { key: 'rightBed', side: 'right', label: 'bed' },
+      { key: 'leftBed', side: 'left', label: 'water' },
+      { key: 'rightBed', side: 'right', label: 'water' },
       { key: 'leftTarget', side: 'left', label: 'target', dashed: true },
       { key: 'rightTarget', side: 'right', label: 'target', dashed: true },
     ],

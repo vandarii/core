@@ -262,7 +262,7 @@ export function TempStage({ onExit }: { onExit: () => void }) {
 
   const zonesF = { left: toZonesF(surface.zonesC.left), right: toZonesF(surface.zonesC.right) }
   const scheduled = (side: StageSide) => previewAt == null ? undefined : scheduledAt(curves, side, previewAt)
-  /** What the surface measures: the controller's reading, else the mean of the zones. */
+  /** What the surface measures: the status's mattress reading, else the mean of the zones. */
   const measuredF = (side: StageSide): number | null => controls[side].bedF ?? mean(zonesF[side])
   /** The colour a half wears: the schedule while previewing, otherwise the measured bed (both halves alike when linked). */
   const heatF = (side: StageSide): number | null => {
@@ -277,7 +277,7 @@ export function TempStage({ onExit }: { onExit: () => void }) {
   const labelColor = (side: StageSide) => previewAt != null || controls[side].isOn ? tempColor(labelF(side)) : STAGE.text
   const statusOf = (side: StageSide) => blocked[side] && previewAt == null
     ? { word: 'OFF' as const, text: 'PAUSED', color: STAGE.text2 }
-    : sideStatus({ on: controls[side].isOn, targetF: controls[side].targetF, bedF: controls[side].bedF }, unit, display, scheduled(side))
+    : sideStatus({ on: controls[side].isOn, targetF: controls[side].targetF, waterF: controls[side].waterF }, unit, display, scheduled(side))
   const inBed = (side: StageSide) => occupancy?.[side]?.occupied ?? false
   const presenceFor = (side: StageSide): Presence => {
     const occ = occupancy?.[side]
@@ -435,6 +435,7 @@ export function TempStage({ onExit }: { onExit: () => void }) {
                   unit={unit}
                   targetF={c.targetF}
                   bedF={c.bedF}
+                  waterF={c.waterF}
                   isOn={c.isOn}
                   paused={blocked[side]}
                   stepDisabled={!c.isOn || c.tempPending || blocked[side]}
@@ -479,6 +480,7 @@ export function TempStage({ onExit }: { onExit: () => void }) {
         unit={unit}
         targetF={controls[panelSide].targetF}
         bedF={controls[panelSide].bedF}
+        waterF={controls[panelSide].waterF}
         stepDisabled={!controls[panelSide].isOn || controls[panelSide].tempPending || blocked[panelSide]}
         onPreview={f => handlePreview(panelSide, f)}
         onCommit={f => handleCommit(panelSide, f)}

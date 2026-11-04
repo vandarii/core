@@ -494,7 +494,7 @@ function SideSummaryCard({ side: s, onClick }: { side: ThermalSide, onClick: () 
       </div>
       {s.note && <p className="text-xs text-danger">{s.note}</p>}
       <div className="grid grid-cols-3 gap-x-3">
-        <KeyValue label="Bed" value={fmtF(s.currentTempF)} size={13} />
+        <KeyValue label="Water" value={fmtF(s.currentTempF)} size={13} />
         <KeyValue label="Water" value={fmtF(s.waterTempF)} size={13} />
         <KeyValue label="Pump rpm" value={s.pumpRpm == null ? '—' : s.pumpRpm.toLocaleString()} size={13} />
       </div>

@@ -30,6 +30,7 @@ export interface SideCardProps {
   unit: TempUnit
   targetF: number
   bedF: number | null
+  waterF: number | null
   isOn: boolean
   /** A notice (priming, pump stall) blocks this side: dimmed, inert, status PAUSED. */
   paused?: boolean
@@ -90,6 +91,7 @@ export function SideCard({
   unit,
   targetF,
   bedF,
+  waterF,
   isOn,
   paused = false,
   stepDisabled,
@@ -189,6 +191,7 @@ export function SideCard({
                         display={display}
                         targetF={targetF}
                         bedF={bedF}
+                        waterF={waterF}
                         isOn={isOn}
                         nowDisabled={stepDisabled}
                         onStepNow={onStep}
@@ -200,6 +203,7 @@ export function SideCard({
                         display={display}
                         targetF={targetF}
                         bedF={bedF}
+                        waterF={waterF}
                         unit={unit}
                         power={isOn}
                         onChange={onPreview}

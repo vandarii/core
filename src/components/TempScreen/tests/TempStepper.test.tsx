@@ -21,7 +21,7 @@ const schedule = {
   nudge: vi.fn(),
 } as unknown as SideNightPhases
 
-const stepper = <TempStepper tab="night" onTabChange={vi.fn()} unit="F" display="degrees" targetF={76} bedF={78} isOn nowDisabled={false} onStepNow={vi.fn()} schedule={schedule} onStepPhase={vi.fn()} />
+const stepper = <TempStepper tab="night" onTabChange={vi.fn()} unit="F" display="degrees" targetF={76} bedF={78} waterF={78} isOn nowDisabled={false} onStepNow={vi.fn()} schedule={schedule} onStepPhase={vi.fn()} />
 
 afterEach(() => {
   cleanup()
@@ -37,4 +37,9 @@ it.each([
   expect(screen.getByText(caption)).toBeTruthy()
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'About suggested temperatures' })))
   expect(screen.getByText(new RegExp(template.replace(/[()]/g, '\\$&')))).toBeTruthy()
+})
+
+it('captions the measured bed while the water decides the direction', () => {
+  render(<TempStepper tab="now" onTabChange={vi.fn()} unit="C" display="degrees" targetF={70} bedF={75.2} waterF={88} isOn nowDisabled={false} onStepNow={vi.fn()} schedule={schedule} onStepPhase={vi.fn()} />)
+  expect(screen.getByTestId('stepper-status').textContent).toBe('Cooling · bed 24°C')
 })

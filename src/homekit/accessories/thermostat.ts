@@ -11,6 +11,7 @@
  * - TargetTemperature → setTargetTemperature (cached, gated on power)
  * - TargetHeatingCoolingState toggles power: 0=off, 3=auto (pod is bidirectional)
  * - CurrentHeatingCoolingState reflects the live drive direction
+ * - CurrentTemperature is the measured mattress, not the firmware's water-following level
  *
  * All hardware writes go through sideController so concurrent characteristic
  * onSet callbacks don't race each other and stomp the user's setpoint.
@@ -21,6 +22,7 @@
 import { Service, Characteristic } from 'hap-nodejs'
 import type { Perms } from 'hap-nodejs'
 import type { DacMonitor } from '@/src/hardware/dacMonitor'
+import { getDeviceEnrichment } from '@/src/hardware/deviceEnrichment'
 import type { DeviceStatus, Side } from '@/src/hardware/types'
 import { MAX_TEMP, MIN_TEMP } from '@/src/hardware/types'
 import {
@@ -50,10 +52,20 @@ export interface ThermostatAccessory {
 
 export function buildThermostatService(side: Side, monitor: DacMonitor): ThermostatAccessory {
   const service = new Service.Thermostat(`Bed ${side}`, side)
+  // HomeKit needs a number, so a stale sensor keeps its last value.
+  let mattressC: number | null = null
+
+  const refreshMattress = async (): Promise<void> => {
+    const f = (await getDeviceEnrichment()).mattressF[side]
+    if (f == null) return
+    mattressC = f2c(f)
+    service.updateCharacteristic(Characteristic.CurrentTemperature, mattressC)
+  }
+  void refreshMattress()
 
   service.getCharacteristic(Characteristic.CurrentTemperature)
     .setProps({ minValue: MIN_C, maxValue: MAX_C, minStep: 0.5 })
-    .onGet(() => readCurrentC(monitor, side))
+    .onGet(() => mattressC ?? readCurrentC(monitor, side))
 
   service.getCharacteristic(Characteristic.TargetTemperature)
     .setProps({ minValue: MIN_C, maxValue: MAX_C, minStep: 0.5 })
@@ -85,7 +97,7 @@ export function buildThermostatService(side: Side, monitor: DacMonitor): Thermos
     .onGet(() => 0)
 
   const onStatus = (status: DeviceStatus): void => {
-    service.updateCharacteristic(Characteristic.CurrentTemperature, sideC(status, side, 'current'))
+    void refreshMattress()
     service.updateCharacteristic(Characteristic.TargetTemperature, sideC(status, side, 'target'))
     service.updateCharacteristic(
       Characteristic.TargetHeatingCoolingState,

@@ -121,7 +121,7 @@ vi.mock('../StageCanvas', () => ({
 
 import { TempStage } from '../TempStage'
 
-const sideStatus = (target: number, level: number, current = 80) => ({ currentTemperature: current, targetTemperature: target, currentLevel: 0, targetLevel: level, heatingDuration: 0 })
+const sideStatus = (target: number, level: number, current = 80) => ({ currentTemperature: current, mattressTemperature: current, targetTemperature: target, currentLevel: 0, targetLevel: level, heatingDuration: 0 })
 const rows = (points: [string, number][]) => points.map(([time, temperature], i) => ({ id: i + 1, dayOfWeek: 'monday', time, temperature, enabled: true }))
 
 beforeEach(() => {
@@ -525,7 +525,7 @@ describe('TempStage', () => {
     m.occupancy = undefined
     m.frame = undefined
     m.statusLoading = true
-    m.status = { leftSide: { ...sideStatus(72, 5), currentTemperature: null }, rightSide: sideStatus(84, 0) }
+    m.status = { leftSide: { ...sideStatus(72, 5), currentTemperature: null, mattressTemperature: null }, rightSide: sideStatus(84, 0) }
     render(<TempStage onExit={() => {}} />)
     await act(async () => {})
     expect(screen.getByTestId('stage-room').textContent).toBe('—')
@@ -541,7 +541,7 @@ describe('TempStage', () => {
 
   it('reads the newest of both frames for the room and refreshes staleness on its own clock', async () => {
     m.older = { ...(m.frame as object), type: 'bedTemp', ts: NOW.getTime() / 1000 - 30, ambientTemp: 10, humidity: 10 }
-    m.status = { leftSide: { ...sideStatus(72, 0), currentTemperature: null }, rightSide: sideStatus(84, 0) }
+    m.status = { leftSide: { ...sideStatus(72, 0), currentTemperature: null, mattressTemperature: null }, rightSide: sideStatus(84, 0) }
     render(<TempStage onExit={() => {}} />)
     await act(async () => {})
     // bedTemp2 is newer (10 s) than bedTemp (30 s), so the room reads 21 °C → 70 °F.

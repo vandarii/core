@@ -18,11 +18,11 @@ const FULL_LEN = 2 * Math.PI * R // ≈ 754
 
 export type TempDirection = 'cool' | 'warm' | 'hold'
 
-/** Accent rule: target < bed → cool, target > bed → warm, equal → hold. */
-export function directionFor(targetF: number, bedF: number | null | undefined): TempDirection {
-  if (bedF == null || !Number.isFinite(bedF)) return 'hold'
+/** Accent rule: target < water → cool, target > water → warm, equal → hold. */
+export function directionFor(targetF: number, waterF: number | null | undefined): TempDirection {
+  if (waterF == null || !Number.isFinite(waterF)) return 'hold'
   const t = Math.round(targetF)
-  const b = Math.round(bedF)
+  const b = Math.round(waterF)
   return t < b ? 'cool' : t > b ? 'warm' : 'hold'
 }
 
@@ -60,6 +60,8 @@ export interface TempControlProps {
   targetF: number
   /** Current bed temperature in °F, if known. */
   bedF?: number | null
+  /** Decides the direction; the bed lags the water. Defaults to bedF for static previews. */
+  waterF?: number | null
   unit?: TempUnit
   /** Side powered on. Off renders at 35% opacity and disables drag. */
   power?: boolean
@@ -81,6 +83,7 @@ export function TempControl({
   display: displayMode = 'degrees',
   targetF,
   bedF,
+  waterF = bedF,
   unit = 'F',
   power = true,
   onChange,
@@ -92,7 +95,7 @@ export function TempControl({
   const dragRef = useRef<number | null>(null)
   const shownF = dragF ?? targetF
   const f = fraction(shownF)
-  const dir = directionFor(shownF, bedF)
+  const dir = directionFor(shownF, waterF)
   const accent = ACCENT_VAR[dir]
   const interactive = power && !!(onChange || onCommit)
 

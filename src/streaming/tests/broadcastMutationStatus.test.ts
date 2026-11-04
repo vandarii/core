@@ -165,8 +165,8 @@ describe('broadcastMutationStatus', () => {
     broadcastMutationStatus()
 
     const frame = piezoMock.broadcastFrame.mock.calls[0]?.[0] as Record<string, any>
-    expect(frame.leftSide).toEqual({ temperatureC: 22, isAlarmVibrating: true })
-    expect(frame.rightSide).toEqual({ temperatureC: 24, isAlarmVibrating: false })
+    expect(frame.leftSide).toEqual({ temperatureC: 22, mattressTemperature: null, isAlarmVibrating: true })
+    expect(frame.rightSide).toEqual({ temperatureC: 24, mattressTemperature: null, isAlarmVibrating: false })
     // Source must not have been mutated.
     expect(status.leftSide).toEqual({ temperatureC: 22 })
     expect(status.rightSide).toEqual({ temperatureC: 24 })
@@ -203,7 +203,7 @@ describe('broadcastMutationStatus', () => {
     broadcastMutationStatus('left')
 
     const frame = piezoMock.broadcastFrame.mock.calls[0]?.[0] as Record<string, any>
-    expect(frame.leftSide).toEqual({ temperatureC: 22, isOn: true, isAlarmVibrating: false })
+    expect(frame.leftSide).toEqual({ temperatureC: 22, isOn: true, mattressTemperature: null, isAlarmVibrating: false })
   })
 
   it('ignores an overlay payload when no side is provided', () => {
@@ -212,8 +212,8 @@ describe('broadcastMutationStatus', () => {
     broadcastMutationStatus(undefined, { temperatureC: 99, isOn: false })
 
     const frame = piezoMock.broadcastFrame.mock.calls[0]?.[0] as Record<string, any>
-    expect(frame.leftSide).toEqual({ temperatureC: 22, isOn: true, isAlarmVibrating: false })
-    expect(frame.rightSide).toEqual({ temperatureC: 24, isOn: false, isAlarmVibrating: false })
+    expect(frame.leftSide).toEqual({ temperatureC: 22, isOn: true, mattressTemperature: null, isAlarmVibrating: false })
+    expect(frame.rightSide).toEqual({ temperatureC: 24, isOn: false, mattressTemperature: null, isAlarmVibrating: false })
   })
 
   it('includes primeCompletedNotification when a timestamp is set', () => {

@@ -119,6 +119,7 @@ import { TempScreen } from '../TempScreen'
 
 const sideStatus = (target: number, level = 5) => ({
   currentTemperature: 80,
+  mattressTemperature: 80,
   targetTemperature: target,
   currentLevel: 0,
   targetLevel: level,

@@ -26,6 +26,7 @@ export interface TempStepperProps {
   /** Now: the side's live target, bed temperature and power. */
   targetF: number
   bedF: number | null
+  waterF: number | null
   isOn: boolean
   nowDisabled: boolean
   onStepNow: (delta: number) => void
@@ -39,11 +40,11 @@ function hueStyle(f: number | null): CSSProperties | undefined {
   return f == null ? undefined : ({ '--h': tempHue(f) } as CSSProperties)
 }
 
-/** Heating / Cooling / Holding by whole display degrees of set point vs bed. */
-export function heatState(targetF: number, bedF: number | null, unit: TempUnit): 'Heating' | 'Cooling' | 'Holding' {
-  if (bedF == null) return 'Holding'
+/** Heating / Cooling / Holding by whole display degrees of set point vs water. */
+export function heatState(targetF: number, waterF: number | null, unit: TempUnit): 'Heating' | 'Cooling' | 'Holding' {
+  if (waterF == null) return 'Holding'
   const t = Math.round(setpointFToDisplay(targetF, unit) ?? targetF)
-  const b = Math.round(setpointFToDisplay(bedF, unit) ?? bedF)
+  const b = Math.round(setpointFToDisplay(waterF, unit) ?? waterF)
   return t > b ? 'Heating' : t < b ? 'Cooling' : 'Holding'
 }
 
@@ -94,6 +95,7 @@ export function TempStepper({
   display,
   targetF,
   bedF,
+  waterF,
   isOn,
   nowDisabled,
   onStepNow,
@@ -129,7 +131,7 @@ export function TempStepper({
   const bed = bedF == null ? '—' : `${Math.round(setpointFToDisplay(bedF, unit) ?? bedF)}°${unit}`
   const caption = phase && phases && !off
     ? `${formatTime(phase.start)} – ${formatTime(phase.end)}`
-    : `${off ? 'Off' : heatState(targetF, bedF, unit)} · bed ${bed}`
+    : `${off ? 'Off' : heatState(targetF, waterF, unit)} · bed ${bed}`
   const days = phase && phases && !off && !schedule.error ? summarizeDays(phases.days) : null
   const hint = !draft
     ? null

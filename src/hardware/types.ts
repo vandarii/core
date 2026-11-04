@@ -90,8 +90,15 @@ export interface DeviceStatus {
  * Individual side status
  */
 export interface SideStatus {
-  currentTemperature: number | null // °F, or null when the level is 0 (off/neutral)
+  /**
+   * °F, or null when the level is 0. Derived from heatLevel, which follows the water at the
+   * Hub, not the mattress: use it to tell how far the water is from target, never as "the bed".
+   * With the pump stopped it follows the heatsink instead. See mattressTemperature.
+   */
+  currentTemperature: number | null
   targetTemperature: number | null // °F, or null when the level is 0 (off/neutral)
+  /** °F, mean of the side's surface sensors; null when missing or stale. Added after parsing. */
+  mattressTemperature?: number | null
   currentLevel: number // -100 to 100
   targetLevel: number // -100 to 100
   heatingDuration: number // In seconds

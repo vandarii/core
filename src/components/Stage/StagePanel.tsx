@@ -40,6 +40,7 @@ export interface StagePanelProps {
   unit: TempUnit
   targetF: number
   bedF: number | null
+  waterF: number | null
   stepDisabled: boolean
   onPreview: (f: number) => void
   onCommit: (f: number) => void
@@ -72,7 +73,7 @@ const STAGE_TOGGLE = {
  */
 export function StagePanel({
   open, side, name, scope, isOn, paused = false, powerDisabled, onPower, away, onAwayToggle, awayDisabled, onClose, status, control, onResumed,
-  controlStyle, display, unit, targetF, bedF, stepDisabled, onPreview, onCommit, onStep, holdMinutes, onHoldChange, stepper,
+  controlStyle, display, unit, targetF, bedF, waterF, stepDisabled, onPreview, onCommit, onStep, holdMinutes, onHoldChange, stepper,
 }: StagePanelProps) {
   const isStepper = controlStyle === 'stepper'
   // The ownership line already reads "Off" for a side that's switched off.
@@ -141,6 +142,7 @@ export function StagePanel({
                   display={display}
                   targetF={targetF}
                   bedF={bedF}
+                  waterF={waterF}
                   isOn={isOn}
                   nowDisabled={stepDisabled}
                   onStepNow={onStep}
@@ -152,6 +154,7 @@ export function StagePanel({
                   display={display}
                   targetF={targetF}
                   bedF={bedF}
+                  waterF={waterF}
                   unit={unit}
                   power={isOn}
                   onChange={onPreview}

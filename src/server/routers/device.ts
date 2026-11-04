@@ -133,6 +133,7 @@ export const deviceRouter = router({
       temperatureControl: z.object({ left: temperatureControlStatusSchema, right: temperatureControlStatusSchema }).optional(),
       leftSide: z.object({
         currentTemperature: z.number().nullable(),
+        mattressTemperature: z.number().nullable(),
         targetTemperature: z.number().nullable(),
         currentLevel: z.number(),
         targetLevel: z.number(),
@@ -141,6 +142,7 @@ export const deviceRouter = router({
       }),
       rightSide: z.object({
         currentTemperature: z.number().nullable(),
+        mattressTemperature: z.number().nullable(),
         targetTemperature: z.number().nullable(),
         currentLevel: z.number(),
         targetLevel: z.number(),
@@ -242,7 +244,7 @@ export const deviceRouter = router({
         ({ wifiStrength, wifiSSID } = getWifiInfo())
       }
       catch { /* Wi-Fi diagnostics must not prevent hardware status reads. */ }
-      const { roomClimate, waterLevelRaw } = await getDeviceEnrichment()
+      const { mattressF, roomClimate, waterLevelRaw } = await getDeviceEnrichment()
 
       return {
         ...status,
@@ -250,11 +252,13 @@ export const deviceRouter = router({
         leftSide: {
           ...status.leftSide,
           currentTemperature: convertTemp(status.leftSide.currentTemperature),
+          mattressTemperature: convertTemp(mattressF.left),
           targetTemperature: convertTemp(status.leftSide.targetTemperature),
         },
         rightSide: {
           ...status.rightSide,
           currentTemperature: convertTemp(status.rightSide.currentTemperature),
+          mattressTemperature: convertTemp(mattressF.right),
           targetTemperature: convertTemp(status.rightSide.targetTemperature),
         },
         ...(primeCompletedAt && { primeCompletedNotification: { timestamp: primeCompletedAt } }),

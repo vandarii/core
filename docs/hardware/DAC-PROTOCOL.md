@@ -200,6 +200,8 @@ tripleTap={"l":0,"r":0}
 quadTap={"l":0,"r":0}
 ```
 
+`heatLevelL/R` follows the water at the Hub, not the mattress: mapped to °F it tracked `frzTemp` within about 0.5 °C on a Pod 4. With the pump stopped that water follows the shared heatsink, so an idle side can read 40 °C over a 24 °C mattress. The measured bed temperature comes from the `bedTemp2` surface sensors.
+
 ### Timing
 
 - **10ms** delay between writing command and reading response
