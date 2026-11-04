@@ -42,7 +42,7 @@ import { deviceSettings, deviceState } from '@/src/db/schema'
 import { bedTemp, flowReadings, vitals } from '@/src/db/biometrics-schema'
 import { getPumpStallNotice } from '@/src/hardware/pumpStallNotification'
 import { FLOW_SOURCE_LOG } from '@/src/lib/pumpLog'
-import { centiDegreesToC, centiPercentToPercent } from '@/src/lib/tempUtils'
+import { centiDegreesToC, centiDegreesToF, centiPercentToPercent } from '@/src/lib/tempUtils'
 import { onServerFrame } from './piezoStream'
 import { getDacMonitorIfRunning } from '@/src/hardware/dacMonitor.instance'
 
@@ -55,6 +55,10 @@ const STATE_PUBLISH_INTERVAL_MS = 30_000
 const RECONNECT_PERIOD_MS = 5_000
 const CONNECT_TIMEOUT_MS = 10_000
 const TEST_CONNECT_TIMEOUT_MS = 5_000
+// Within this many °F of target, HA shows the side as idle rather than heating or cooling.
+const CLIMATE_IDLE_BAND_F = 1
+// bed_temp is written about once a minute. Older than this means the monitor has stalled.
+const MATTRESS_MAX_AGE_MS = 5 * 60_000
 
 export type ConfigSource = 'db' | 'env' | 'default'
 
@@ -257,6 +261,62 @@ function haDevice(): HaDiscoveryDevice {
   }
 }
 
+/**
+ * What the side is doing right now, as an HA hvac_action. The Pod takes one
+ * setpoint and picks heating or cooling itself, so this is inferred from the
+ * gap between target and current temperature (°F), not read from the hardware.
+ */
+function climateAction(row: {
+  isPowered: boolean
+  currentTemperature: number | null
+  targetTemperature: number | null
+}): 'off' | 'idle' | 'heating' | 'cooling' {
+  if (!row.isPowered) return 'off'
+  if (row.currentTemperature == null || row.targetTemperature == null) return 'idle'
+  const gap = row.targetTemperature - row.currentTemperature
+  if (Math.abs(gap) < CLIMATE_IDLE_BAND_F) return 'idle'
+  return gap > 0 ? 'heating' : 'cooling'
+}
+
+/**
+ * Latest mattress temperature per side in °F, or null when it is missing or stale.
+ * An off side's water reading follows the shared heatsink, not the bed: with the
+ * pump stopped it reached 42 °C while the mattress stayed near 24 °C.
+ */
+async function mattressTempsF(): Promise<Record<'left' | 'right', number | null>> {
+  const none = { left: null, right: null }
+  try {
+    const [latest] = await biometricsDb
+      .select({
+        timestamp: bedTemp.timestamp,
+        leftOuterTemp: bedTemp.leftOuterTemp,
+        leftCenterTemp: bedTemp.leftCenterTemp,
+        leftInnerTemp: bedTemp.leftInnerTemp,
+        rightOuterTemp: bedTemp.rightOuterTemp,
+        rightCenterTemp: bedTemp.rightCenterTemp,
+        rightInnerTemp: bedTemp.rightInnerTemp,
+      })
+      .from(bedTemp)
+      .orderBy(desc(bedTemp.timestamp))
+      .limit(1)
+    if (!latest || Date.now() - latest.timestamp.getTime() > MATTRESS_MAX_AGE_MS) return none
+    const meanF = (temps: (number | null)[]) => {
+      const present = temps.filter(t => t != null)
+      if (present.length === 0) return null
+      const mean = present.reduce((sum, t) => sum + t, 0) / present.length
+      return Math.round(centiDegreesToF(mean) * 10) / 10
+    }
+    return {
+      left: meanF([latest.leftOuterTemp, latest.leftCenterTemp, latest.leftInnerTemp]),
+      right: meanF([latest.rightOuterTemp, latest.rightCenterTemp, latest.rightInnerTemp]),
+    }
+  }
+  catch (err) {
+    console.warn('[mqtt] mattress temperature read failed:', err instanceof Error ? err.message : err)
+    return none
+  }
+}
+
 function publishHaDiscovery(): void {
   if (!state.resolved?.haDiscovery) return
   const id = deviceId()
@@ -279,8 +339,10 @@ function publishHaDiscovery(): void {
     temperature_command_topic: topic('cmd', 'set-temperature'),
     temperature_command_template: `{ "side": "${side}", "temperature": {{ value | int }} }`,
     mode_command_topic: topic('cmd', 'set-power'),
-    mode_command_template: `{ "side": "${side}", "powered": {{ "true" if value == "heat" else "false" }} }`,
-    modes: ['off', 'heat'],
+    mode_command_template: `{ "side": "${side}", "powered": {{ "false" if value == "off" else "true" }} }`,
+    modes: ['off', 'auto'],
+    action_topic: topic('state', side, 'climate'),
+    action_template: '{{ value_json.action }}',
     min_temp: 55,
     max_temp: 110,
     temp_step: 1,
@@ -467,15 +529,19 @@ async function publishState(): Promise<void> {
 
   try {
     const sides = await db.select().from(deviceState)
+    const mattressF = await mattressTempsF()
     for (const row of sides) {
-      const mode = row.isPowered ? 'heat' : 'off'
+      const mode = row.isPowered ? 'auto' : 'off'
       safePublish(topic('state', row.side, 'climate'), JSON.stringify({
         ts: row.lastUpdated.getTime(),
-        currentTemperature: row.currentTemperature,
+        currentTemperature: row.isPowered
+          ? row.currentTemperature
+          : mattressF[row.side] ?? row.currentTemperature,
         targetTemperature: row.targetTemperature,
         isPowered: row.isPowered,
         isAlarmVibrating: row.isAlarmVibrating,
         mode,
+        action: climateAction(row),
         waterLevel: row.waterLevel,
       }), RETAINED_QOS_0)
     }

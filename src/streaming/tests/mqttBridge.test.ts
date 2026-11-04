@@ -893,8 +893,10 @@ describe('mqttBridge — HA discovery payload content', () => {
       temperature_command_topic: 'sleepypod/testpod/cmd/set-temperature',
       temperature_command_template: `{ "side": "${side}", "temperature": {{ value | int }} }`,
       mode_command_topic: 'sleepypod/testpod/cmd/set-power',
-      mode_command_template: `{ "side": "${side}", "powered": {{ "true" if value == "heat" else "false" }} }`,
-      modes: ['off', 'heat'],
+      mode_command_template: `{ "side": "${side}", "powered": {{ "false" if value == "off" else "true" }} }`,
+      modes: ['off', 'auto'],
+      action_topic: `sleepypod/testpod/state/${side}/climate`,
+      action_template: '{{ value_json.action }}',
       min_temp: 55,
       max_temp: 110,
       temp_step: 1,
@@ -1945,8 +1947,10 @@ describe('mqttBridge — HA discovery payload contents (mutation coverage)', () 
       temperature_command_topic: `sleepypod/${ID}/cmd/set-temperature`,
       temperature_command_template: `{ "side": "${side}", "temperature": {{ value | int }} }`,
       mode_command_topic: `sleepypod/${ID}/cmd/set-power`,
-      mode_command_template: `{ "side": "${side}", "powered": {{ "true" if value == "heat" else "false" }} }`,
-      modes: ['off', 'heat'],
+      mode_command_template: `{ "side": "${side}", "powered": {{ "false" if value == "off" else "true" }} }`,
+      modes: ['off', 'auto'],
+      action_topic: climateTopic,
+      action_template: '{{ value_json.action }}',
       min_temp: 55,
       max_temp: 110,
       temp_step: 1,
@@ -2070,9 +2074,11 @@ describe('mqttBridge — publishState payload contents (mutation coverage)', () 
     dbMock.state.bedTempRow = { timestamp: new Date('2026-03-03T00:00:00Z'), ambientTemp: 2000, humidity: 5000, leftPumpRpm: 1800, rightPumpRpm: 1900, leftFlowrateCd: 2050, rightFlowrateCd: 2150 }
   }
 
-  async function capture(): Promise<{ fake: FakeClient, map: Record<string, string> }> {
+  async function capture(deviceStateRows?: unknown[], bedTempRow?: unknown): Promise<{ fake: FakeClient, map: Record<string, string> }> {
     process.env.MQTT_DEVICE_ID = ID
     setupData()
+    if (deviceStateRows) dbMock.state.deviceStateRows = deviceStateRows
+    if (bedTempRow) dbMock.state.bedTempRow = bedTempRow
     const fake = await startBridgeWithFake({ config: { haDiscovery: false, topicPrefix: 'sleepypod' } })
     fake.connected = true
     fake.emit('connect')
@@ -2106,7 +2112,7 @@ describe('mqttBridge — publishState payload contents (mutation coverage)', () 
     await shutdownMqttBridge()
   })
 
-  it('per-side climate payload maps isPowered → mode heat/off', async () => {
+  it('per-side climate payload maps isPowered → mode auto/off and infers action', async () => {
     const { map } = await capture()
     expect(JSON.parse(map[`sleepypod/${ID}/state/left/climate`])).toEqual({
       ts: new Date('2026-01-01T00:00:00Z').getTime(),
@@ -2114,7 +2120,8 @@ describe('mqttBridge — publishState payload contents (mutation coverage)', () 
       targetTemperature: 72,
       isPowered: true,
       isAlarmVibrating: false,
-      mode: 'heat',
+      mode: 'auto',
+      action: 'heating',
       waterLevel: 'ok',
     })
     expect(JSON.parse(map[`sleepypod/${ID}/state/right/climate`])).toEqual({
@@ -2124,9 +2131,77 @@ describe('mqttBridge — publishState payload contents (mutation coverage)', () 
       isPowered: false,
       isAlarmVibrating: true,
       mode: 'off',
+      action: 'off',
       waterLevel: 'low',
     })
     await shutdownMqttBridge()
+  })
+
+  it.each([
+    { current: 71, target: 64, action: 'cooling' },
+    { current: 64, target: 71, action: 'heating' },
+    { current: 64.5, target: 64, action: 'idle' },
+    { current: 64, target: 65, action: 'heating' },
+    { current: null, target: 64, action: 'idle' },
+    { current: 71, target: null, action: 'idle' },
+  ])('infers action $action from current $current and target $target', async ({ current, target, action }) => {
+    const { map } = await capture([
+      { side: 'left', currentTemperature: current, targetTemperature: target, isPowered: true, isAlarmVibrating: false, waterLevel: 'ok', lastUpdated: new Date('2026-01-01T00:00:00Z') },
+    ])
+    expect(JSON.parse(map[`sleepypod/${ID}/state/left/climate`]).action).toBe(action)
+    await shutdownMqttBridge()
+  })
+
+  describe('climate current temperature', () => {
+    const rows = [
+      { side: 'left', currentTemperature: 106, targetTemperature: null, isPowered: false, isAlarmVibrating: false, waterLevel: 'ok', lastUpdated: new Date('2026-01-01T00:00:00Z') },
+      { side: 'right', currentTemperature: 68, targetTemperature: 68, isPowered: true, isAlarmVibrating: false, waterLevel: 'ok', lastUpdated: new Date('2026-01-01T00:00:00Z') },
+    ]
+    const bed = (ageMs: number, left: (number | null)[]) => ({
+      timestamp: new Date(Date.now() - ageMs),
+      ambientTemp: 2000,
+      humidity: 5000,
+      leftOuterTemp: left[0],
+      leftCenterTemp: left[1],
+      leftInnerTemp: left[2],
+      rightOuterTemp: 2300,
+      rightCenterTemp: 2300,
+      rightInnerTemp: 2300,
+    })
+    const current = (map: Record<string, string>, side: string) =>
+      JSON.parse(map[`sleepypod/${ID}/state/${side}/climate`]).currentTemperature
+
+    it('uses the mattress for an off side and the water for a powered side', async () => {
+      const { map } = await capture(rows, bed(60_000, [2400, 2500, 2600]))
+      expect(current(map, 'left')).toBe(77)
+      expect(current(map, 'right')).toBe(68)
+      await shutdownMqttBridge()
+    })
+
+    it('averages only the mattress sensors that reported', async () => {
+      const { map } = await capture(rows, bed(60_000, [2400, null, 2600]))
+      expect(current(map, 'left')).toBe(77)
+      await shutdownMqttBridge()
+    })
+
+    it('falls back to the water reading when every mattress sensor is missing', async () => {
+      const { map } = await capture(rows, bed(60_000, [null, null, null]))
+      expect(current(map, 'left')).toBe(106)
+      await shutdownMqttBridge()
+    })
+
+    it('falls back to the water reading when the mattress data is stale', async () => {
+      const { map } = await capture(rows, bed(6 * 60_000, [2400, 2500, 2600]))
+      expect(current(map, 'left')).toBe(106)
+      await shutdownMqttBridge()
+    })
+
+    it('falls back to the water reading when the mattress read fails', async () => {
+      dbMock.state.throwOnBedTemp = true
+      const { map } = await capture(rows)
+      expect(current(map, 'left')).toBe(106)
+      await shutdownMqttBridge()
+    })
   })
 
   it('biometrics payload carries heartRate / hrv / breathingRate', async () => {

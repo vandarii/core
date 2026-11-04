@@ -115,8 +115,10 @@ without sshing in.
 On `connect` we publish retained discovery payloads under
 `homeassistant/<comp>/<device-id>/<entity>/config` for:
 
-- `climate` per side — current/target temperature, mode (`off|heat`),
-  command topics that round-trip through `cmd/set-temperature` and
+- `climate` per side — current/target temperature, mode (`off|auto`), inferred action
+  (`off|idle|heating|cooling`). Current temperature is the water reading
+  while powered and the mattress average while off, because an off side's
+  water sensor follows the shared heatsink. Command topics round-trip through `cmd/set-temperature` and
   `cmd/set-power`.
 - `sensor` for water level, per-side heart rate, breathing rate, HRV.
 - `sensor` for ambient temperature (°C, `device_class: temperature`) and
