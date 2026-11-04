@@ -1,0 +1,1 @@
+ALTER TABLE `flow_readings` ADD `source` text DEFAULT 'frzHealth' NOT NULL;

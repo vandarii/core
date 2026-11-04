@@ -25,6 +25,7 @@ import { GestureDispatcher, tapGestureEvent } from './gestureDispatch'
 import { defaultGestureActionDeps } from './gestureActionHandler.deps'
 import { DeviceStateSync, getAlarmState } from './deviceStateSync'
 import { trackPrimingState, resetPrimingState, getPrimeCompletedAt } from './primeNotification'
+import { PumpLogRecorder } from './pumpLogRecorder'
 import { getAllPumpStallNotices } from './pumpStallNotification'
 import { getSnoozeStatus, suspendSnoozes } from './snoozeManager'
 import { suspendActiveAlarms } from './alarmState'
@@ -139,7 +140,9 @@ export const getDacMonitor = async (): Promise<DacMonitor> => {
       })
 
       // Sensor-stream frames for in-process use: frzHealth records flow data,
-      // tap-gesture feeds the gesture dispatcher.
+      // log frames carry pump speed where frzHealth is absent, tap-gesture
+      // feeds the gesture dispatcher.
+      const pumpLog = new PumpLogRecorder()
       import('../streaming/piezoStream').then(({ onServerFrame }) => {
         g[KEYS.unsubFlow] = onServerFrame((frame) => {
           const record = frame as Record<string, unknown>
@@ -148,6 +151,11 @@ export const getDacMonitor = async (): Promise<DacMonitor> => {
             if (event) gestures.fromStream(event)
             return
           }
+          if (record.type === 'log') {
+            pumpLog.record(record)
+            return
+          }
+          if (record.type === 'frzHealth') pumpLog.noteHealthFrame()
           stateSync.recordFlowData(record)
         })
       }).catch(() => { /* WS server may not be started yet */ })

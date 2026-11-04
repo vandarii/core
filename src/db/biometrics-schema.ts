@@ -204,6 +204,8 @@ export const flowReadings = sqliteTable('flow_readings', {
   rightFlowrateCd: integer('right_flowrate_cd'),
   leftPumpRpm: integer('left_pump_rpm'),
   rightPumpRpm: integer('right_pump_rpm'),
+  // 'frzHealth' = live telemetry; 'log' = sampled from firmware logs (src/lib/pumpLog.ts)
+  source: text('source').notNull().default('frzHealth'),
 }, t => [
   uniqueIndex('idx_flow_readings_timestamp').on(t.timestamp),
 ])

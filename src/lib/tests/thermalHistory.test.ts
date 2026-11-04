@@ -30,6 +30,25 @@ describe('bucketSecondsFor', () => {
 })
 
 describe('getThermalHistory', () => {
+  it('holds readings sampled from firmware logs so the chart can draw them, for a limited time', () => {
+    db.insert(schema.flowReadings).values([
+      { timestamp: minutesAgo(40), leftPumpRpm: 0, rightPumpRpm: 2000, source: 'log' },
+      { timestamp: minutesAgo(35), leftPumpRpm: 0, rightPumpRpm: 2400, source: 'log' },
+    ]).run()
+
+    const { points, available } = getThermalHistory(db as never, '1h', NOW)
+    const rpmAt = (minutes: number) => points.find(p => Math.abs(p.t - (NOW - minutes * 60_000)) <= 30_000)?.rightRpm
+    expect(rpmAt(38)).toBe(2000)
+    expect(rpmAt(30)).toBe(2400)
+    expect(rpmAt(20)).toBeUndefined()
+    expect(available.pump).toBe(true)
+  })
+
+  it('does not hold telemetry readings across gaps', () => {
+    db.insert(schema.flowReadings).values({ timestamp: minutesAgo(40), leftPumpRpm: 1000, rightPumpRpm: 2000 }).run()
+    expect(getThermalHistory(db as never, '1h', NOW).points).toHaveLength(1)
+  })
+
   it('averages each table into shared buckets and converts centidegrees to °F', () => {
     db.insert(schema.bedTemp).values([
       { timestamp: minutesAgo(10), leftCenterTemp: 2500, rightCenterTemp: 2600 },

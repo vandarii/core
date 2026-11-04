@@ -15,10 +15,11 @@ import {
   deviceSettings,
 } from '@/src/db/schema'
 import { flowReadings, primeEvents } from '@/src/db/biometrics-schema'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, ne } from 'drizzle-orm'
 import { getSharedHardwareClient } from '@/src/hardware/dacMonitor.instance'
 import { getDacMonitorIfRunning } from '@/src/hardware/dacMonitor.instance'
 import { getDatabaseIntegrity } from '@/src/db/integrity'
+import { FLOW_SOURCE_LOG } from '@/src/lib/pumpLog'
 import { getServerPerformance } from '@/src/lib/serverPerformance'
 import { getThermalHistory, THERMAL_RANGES, type ThermalRange } from '@/src/lib/thermalHistory'
 import { readThermalTruth, reportsPumpSpeed } from '@/src/lib/thermalTruth'
@@ -650,7 +651,7 @@ export const healthRouter = router({
         .all()
       const [last] = biometricsDb.select({ ts: primeEvents.timestamp }).from(primeEvents).orderBy(desc(primeEvents.timestamp)).limit(1).all()
       const [first] = biometricsDb.select({ ts: primeEvents.timestamp }).from(primeEvents).orderBy(primeEvents.timestamp).limit(1).all()
-      const [flow] = biometricsDb.select({ ts: flowReadings.timestamp }).from(flowReadings).limit(1).all()
+      const [flow] = biometricsDb.select({ ts: flowReadings.timestamp }).from(flowReadings).where(ne(flowReadings.source, FLOW_SOURCE_LOG)).limit(1).all()
       return {
         pumpStallProtectionEnabled: settings?.pumpStall ?? false,
         reportsPumpSpeed: reportsPumpSpeed(flow != null),

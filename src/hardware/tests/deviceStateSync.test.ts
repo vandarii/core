@@ -74,7 +74,8 @@ function resetSchema(): void {
       left_flowrate_cd INTEGER,
       right_flowrate_cd INTEGER,
       left_pump_rpm INTEGER NOT NULL,
-      right_pump_rpm INTEGER NOT NULL
+      right_pump_rpm INTEGER,
+      source TEXT NOT NULL DEFAULT 'frzHealth' NOT NULL
     );
   `)
 }

@@ -2839,7 +2839,8 @@ describe('startup telemetry with the real pump stall guard', () => {
     biometricsSqlite.exec(`
       CREATE TABLE IF NOT EXISTS flow_readings (
         id INTEGER PRIMARY KEY, timestamp INTEGER, left_flowrate_cd INTEGER,
-        right_flowrate_cd INTEGER, left_pump_rpm INTEGER, right_pump_rpm INTEGER
+        right_flowrate_cd INTEGER, left_pump_rpm INTEGER, right_pump_rpm INTEGER,
+      source TEXT NOT NULL DEFAULT 'frzHealth'
       );
       CREATE TABLE IF NOT EXISTS water_level_readings (
         id INTEGER PRIMARY KEY, timestamp INTEGER, level TEXT,

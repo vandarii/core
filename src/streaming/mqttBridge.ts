@@ -41,6 +41,7 @@ import { db, biometricsDb } from '@/src/db'
 import { deviceSettings, deviceState } from '@/src/db/schema'
 import { bedTemp, flowReadings, vitals } from '@/src/db/biometrics-schema'
 import { getPumpStallNotice } from '@/src/hardware/pumpStallNotification'
+import { FLOW_SOURCE_LOG } from '@/src/lib/pumpLog'
 import { centiDegreesToC, centiPercentToPercent } from '@/src/lib/tempUtils'
 import { onServerFrame } from './piezoStream'
 import { getDacMonitorIfRunning } from '@/src/hardware/dacMonitor.instance'
@@ -543,14 +544,17 @@ async function publishState(): Promise<void> {
         ts,
         rpm: latestFlow.rightPumpRpm,
       }), RETAINED_QOS_0)
-      safePublish(topic('pump', 'left', 'loop_temp_c'), JSON.stringify({
-        ts,
-        temperature: latestFlow.leftFlowrateCd != null ? latestFlow.leftFlowrateCd / 100 : null,
-      }), RETAINED_QOS_0)
-      safePublish(topic('pump', 'right', 'loop_temp_c'), JSON.stringify({
-        ts,
-        temperature: latestFlow.rightFlowrateCd != null ? latestFlow.rightFlowrateCd / 100 : null,
-      }), RETAINED_QOS_0)
+      // Rows sampled from firmware logs carry no loop temperature.
+      if (latestFlow.source !== FLOW_SOURCE_LOG) {
+        safePublish(topic('pump', 'left', 'loop_temp_c'), JSON.stringify({
+          ts,
+          temperature: latestFlow.leftFlowrateCd != null ? latestFlow.leftFlowrateCd / 100 : null,
+        }), RETAINED_QOS_0)
+        safePublish(topic('pump', 'right', 'loop_temp_c'), JSON.stringify({
+          ts,
+          temperature: latestFlow.rightFlowrateCd != null ? latestFlow.rightFlowrateCd / 100 : null,
+        }), RETAINED_QOS_0)
+      }
     }
   }
   catch (err) {

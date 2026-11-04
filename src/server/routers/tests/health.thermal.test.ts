@@ -187,7 +187,52 @@ describe('health.thermal verdicts', () => {
     expect(res.sides.map(s => s.verdict)).toEqual(['unknown', 'unknown'])
     expect(res.reportsPumpSpeed).toBe(false)
     expect(res.sides[0].pumpRpm).toBeNull()
-    expect(res.sides[0].note).toContain('does not report pump speed')
+    expect(res.sides[0].note).toContain('only logs pump speed')
+  })
+
+  describe('pump speed sampled from firmware logs', () => {
+    const powered = () => {
+      vi.mocked(getDacMonitorIfRunning).mockReturnValue({ getLastStatus: () => ({ podVersion: PodVersion.POD_4 }) } as ReturnType<typeof getDacMonitorIfRunning>)
+      rows.deviceStateQueue = [
+        [{ side: 'left', isPowered: true, targetTemperature: 68, currentTemperature: 80, isAlarmVibrating: false, poweredOnAt: new Date() }],
+        [{ side: 'right', isPowered: true, targetTemperature: 77, currentTemperature: 77, isAlarmVibrating: false, poweredOnAt: new Date() }],
+      ]
+    }
+    const reading = (ageMs: number, leftPumpRpm: number, rightPumpRpm: number) => ({
+      timestamp: new Date(Date.now() - ageMs), leftPumpRpm, rightPumpRpm, leftFlowrateCd: null, rightFlowrateCd: null, source: 'log',
+    })
+
+    it('shows a running pump, past the 180s limit that means stalled for telemetry', async () => {
+      powered()
+      rows.flow = [reading(300_000, 2342, 2342)]
+      const res = await caller.thermal({})
+      expect(res.sides.map(s => s.verdict)).toEqual(['delivering', 'holding'])
+      expect(res.sides[0].pumpRpm).toBe(2342)
+      expect(res.sides[0].readingAgeSec).toBe(300)
+      expect(res.sides[0].note).toBeNull()
+    })
+
+    it('never reports stalled from a logged zero', async () => {
+      powered()
+      rows.flow = [reading(60_000, 0, 0)]
+      const res = await caller.thermal({})
+      expect(res.sides.map(s => s.verdict)).toEqual(['unknown', 'unknown'])
+    })
+
+    it('never reports stalled from an old reading, and stops showing it', async () => {
+      powered()
+      rows.flow = [reading(3_600_000, 2342, 2342)]
+      const res = await caller.thermal({})
+      expect(res.sides.map(s => s.verdict)).toEqual(['unknown', 'unknown'])
+      expect(res.sides[0].pumpRpm).toBeNull()
+    })
+
+    it('does not count as reporting pump speed, so the stall guard is not implied', async () => {
+      powered()
+      rows.flow = [reading(60_000, 2342, 2342)]
+      const res = await caller.thermal({})
+      expect(res.reportsPumpSpeed).toBe(false)
+    })
   })
 
   it('stalled when powered but the latest flow reading is stale (no fresh frames)', async () => {

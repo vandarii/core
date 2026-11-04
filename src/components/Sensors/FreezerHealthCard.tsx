@@ -6,6 +6,7 @@ import { useSensorFrame } from '@/src/hooks/useSensorStream'
 import type { FrzHealthFrame } from '@/src/hooks/useSensorStream'
 import { trpc } from '@/src/utils/trpc'
 import { useTemperatureUnit } from '@/src/hooks/useTemperatureUnit'
+import { recentPumpReading } from '@/src/lib/pumpLog'
 import { formatDisplayTemp, sensorCToDisplay } from '@/src/lib/tempUtils'
 import { Card, SectionLabel, Skeleton, StatusDot, type Tone } from '@/src/components/ds'
 import { WaterTankGauge } from '@/src/components/status/WaterTankGauge'
@@ -75,6 +76,17 @@ export function FreezerHealthCard() {
     },
   )
 
+  // Firmware without frzHealth only logs pump speed every few minutes.
+  const latestFlow = trpc.waterLevel.getLatestFlowReading.useQuery(
+    {},
+    {
+      enabled: !frzHealth,
+      refetchInterval: 60_000,
+      staleTime: 30_000,
+    },
+  )
+  const storedPump = frzHealth ? null : recentPumpReading(latestFlow.data, latestFlow.dataUpdatedAt)
+
   // Display-unit numbers: live frames are Celsius, stored rows pre-converted
   const temps = frzTemp
     ? {
@@ -116,9 +128,10 @@ export function FreezerHealthCard() {
         ? `${t(temps.leftWater)} / ${t(temps.rightWater)}`
         : t(temps.leftWater ?? temps.rightWater))
     : '--'
-  const rpm = (v: number | undefined) => v === undefined ? '--' : v.toLocaleString()
+  const rpm = (v: number | null | undefined) => v == null ? '--' : v.toLocaleString()
 
   const secondary = [
+    storedPump && `pump read ${Math.round(storedPump.ageMs / 60_000)}m ago`,
     frzHealth && `fan ${frzHealth.fan.rpm.toLocaleString()} rpm`,
     frzHealth && `tec ${frzHealth.left.tecCurrent.toFixed(1)}/${frzHealth.right.tecCurrent.toFixed(1)} A`,
     frzTherm && `therm ${frzTherm.left.toFixed(1)}/${frzTherm.right.toFixed(1)}`,
@@ -147,8 +160,8 @@ export function FreezerHealthCard() {
         <div className="grid grid-cols-2 gap-2.5">
           <BigStat value={temps ? `${t(temps.heatsink)}` : '--'} label="Heatsink" warn={false} />
           <BigStat value={water} label="Water" warn={false} />
-          <BigStat value={rpm(frzHealth?.left.pumpRpm)} label="Pump L · rpm" warn={frzHealth?.left.pumpRpm === 0} />
-          <BigStat value={rpm(frzHealth?.right.pumpRpm)} label="Pump R · rpm" warn={frzHealth?.right.pumpRpm === 0} />
+          <BigStat value={rpm(frzHealth?.left.pumpRpm ?? storedPump?.left)} label="Pump L · rpm" warn={frzHealth?.left.pumpRpm === 0} />
+          <BigStat value={rpm(frzHealth?.right.pumpRpm ?? storedPump?.right)} label="Pump R · rpm" warn={frzHealth?.right.pumpRpm === 0} />
         </div>
         {tank
           ? (

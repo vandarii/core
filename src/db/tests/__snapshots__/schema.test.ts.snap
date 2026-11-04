@@ -441,6 +441,7 @@ exports[`complete Drizzle schema contracts > pins every biometrics table, column
       "right_flowrate_cd | sql:integer | logical:number/SQLiteInteger | nullable | default:none | not-primary-key | not-unique | not-autoincrement | enum:none",
       "left_pump_rpm | sql:integer | logical:number/SQLiteInteger | nullable | default:none | not-primary-key | not-unique | not-autoincrement | enum:none",
       "right_pump_rpm | sql:integer | logical:number/SQLiteInteger | nullable | default:none | not-primary-key | not-unique | not-autoincrement | enum:none",
+      "source | sql:text | logical:string/SQLiteText | not-null | default:frzHealth | not-primary-key | not-unique | not-autoincrement | enum:none",
     ],
     "exportName": "flowReadings",
     "foreignKeys": [],

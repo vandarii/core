@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
+import { FLOW_SOURCE_LOG, LOGGED_PUMP_MAX_AGE_MS } from '@/src/lib/pumpLog'
 import { centiDegreesToF } from '@/src/lib/tempUtils'
 
 /**
@@ -7,6 +8,9 @@ import { centiDegreesToF } from '@/src/lib/tempUtils'
  * freezer_temp, flow_readings and thermal_state rows averaged into at most
  * MAX_BUCKETS time buckets, all in SQL so a 7-day window stays cheap on the
  * pod. Nothing is interpolated or invented — a bucket with no rows is absent.
+ * The one exception is pump speed sampled from firmware logs: each reading is
+ * held until the next, for at most LOGGED_PUMP_MAX_AGE_MS, because readings
+ * minutes apart would otherwise be isolated points the chart can't draw.
  */
 
 export const THERMAL_RANGES = { '1h': 3_600, '12h': 43_200, '24h': 86_400, '48h': 172_800, '7d': 604_800 } as const
@@ -101,6 +105,19 @@ export function getThermalHistory(db: Db, range: ThermalRange, nowMs = Date.now(
   for (const row of flow) {
     Object.assign(at(row.b), { leftRpm: row.l == null ? null : Math.round(row.l), rightRpm: row.r == null ? null : Math.round(row.r) })
   }
+
+  const logged = db.all<{ ts: number, l: number | null, r: number | null }>(sql`
+    SELECT timestamp AS ts, left_pump_rpm AS l, right_pump_rpm AS r
+    FROM flow_readings WHERE ${inRange} AND source = ${FLOW_SOURCE_LOG} ORDER BY timestamp`)
+  logged.forEach((row, i) => {
+    const heldUntil = Math.min(row.ts + LOGGED_PUMP_MAX_AGE_MS / 1000, logged[i + 1]?.ts ?? to, to)
+    const bucketOf = (ts: number) => Math.floor((ts - from) / bucketSec)
+    for (let b = bucketOf(row.ts); b <= bucketOf(heldUntil); b++) {
+      const p = at(b)
+      p.leftRpm ??= row.l
+      p.rightRpm ??= row.r
+    }
+  })
 
   const state = db.all<{ b: number, side: Side, bed: number | null, target: number | null }>(sql`
     SELECT ${bucket} AS b, side, AVG(current_temp_f) AS bed, AVG(target_temp_f) AS target

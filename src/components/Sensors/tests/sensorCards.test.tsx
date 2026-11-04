@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
-import { beforeEach, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SensorFrame } from '@/src/hooks/useSensorStream'
 import { BedTempMatrix } from '../BedTempMatrix'
 import { FreezerHealthCard } from '../FreezerHealthCard'
@@ -23,11 +23,11 @@ vi.mock('@/src/hooks/useSideNames', () => ({ useSideNames: () => ({ sideName: (s
 vi.mock('@/src/utils/trpc', () => {
   const query = (key: string) => ({ useQuery: (input: unknown) => {
     mock.query(key, input)
-    return { data: mock.data[key], isLoading: mock.loading, isError: !!mock.error, error: mock.error }
+    return { data: mock.data[key], dataUpdatedAt: Date.now(), isLoading: mock.loading, isError: !!mock.error, error: mock.error }
   } })
   return { trpc: {
     environment: { getLatestBedTemp: query('bed'), getLatestFreezerTemp: query('freezer'), getLatestAmbientLight: query('light') },
-    waterLevel: { getLatest: query('water'), getFlowReadings: query('flow') }, biometrics: { getOccupancy: query('occupancy') },
+    waterLevel: { getLatest: query('water'), getFlowReadings: query('flow'), getLatestFlowReading: query('latestFlow') }, biometrics: { getOccupancy: query('occupancy') },
   } }
 })
 beforeEach(() => {
@@ -153,6 +153,37 @@ it('marks a side Disconnected only when sensHealth reports it unlinked', () => {
   mock.frames.sensHealth = { type: 'sensHealth', ts: 3, version: 1, left: { connected: false }, right: { connected: false } }
   rerender(<PresenceCard />)
   expect(screen.getAllByText('Disconnected')).toHaveLength(2)
+})
+
+describe('firmware that only logs pump speed', () => {
+  const logged = (ageMs: number) => ({ timestamp: new Date(Date.now() - ageMs), leftFlowrateCd: null, rightFlowrateCd: null, leftPumpRpm: 0, rightPumpRpm: 2342 })
+
+  it('shows the logged RPM on the freezer card with its age, without a stopped-pump warning', () => {
+    mock.frames = { frzTemp: { left: 24, right: 26, amb: 20, hs: 30 } }
+    mock.data.latestFlow = logged(180_000)
+    render(<FreezerHealthCard />)
+    expect(screen.getByText('2,342')).toBeTruthy()
+    expect(screen.getByText('0').className).not.toContain('text-warn')
+    expect(screen.getByText(/pump read 3m ago/)).toBeTruthy()
+  })
+
+  it('stops showing a reading too old to describe the pump', () => {
+    mock.frames = { frzTemp: { left: 24, right: 26, amb: 20, hs: 30 } }
+    mock.data.latestFlow = logged(3_600_000)
+    render(<FreezerHealthCard />)
+    expect(screen.queryByText('2,342')).toBeNull()
+    expect(screen.queryByText(/pump read/)).toBeNull()
+  })
+
+  it('opens the flow card on RPM and says flow rate is not available', () => {
+    mock.frames = {}
+    mock.data.flow = [logged(360_000), logged(60_000)]
+    render(<FlowrateChart />)
+    expect(screen.getByText('Right · rpm')).toBeTruthy()
+    expect(screen.getByText('2,342')).toBeTruthy()
+    fireEvent.click(screen.getByText('Flow'))
+    expect(screen.getByText('This firmware does not report flow rate')).toBeTruthy()
+  })
 })
 
 it('switches flow units and ranges with live readings and downsampled history', () => {

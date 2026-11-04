@@ -1,5 +1,6 @@
 'use client'
 
+import { recentPumpReading } from '@/src/lib/pumpLog'
 import { formatClock } from '@/src/lib/timeFormat'
 import { useTimeFormat } from '@/src/providers/TimeFormatProvider'
 
@@ -34,7 +35,7 @@ const HOUR_OPTIONS = [
 export function FlowrateChart() {
   const timeFormat = useTimeFormat()
   const [hours, setHours] = useState<number>(6)
-  const [viewMode, setViewMode] = useState<ViewMode>('flowrate')
+  const [chosenView, setViewMode] = useState<ViewMode | null>(null)
 
   const frzHealth = useSensorFrame('frzHealth')
 
@@ -76,9 +77,15 @@ export function FlowrateChart() {
       : points
   }, [flowQuery.data])
 
+  // Firmware that only logs pump speed has RPM history but never any flow.
+  const hasFlow = chartData.some(d => d.leftFlow != null || d.rightFlow != null)
+  const rpmOnly = !hasFlow && chartData.some(d => d.leftRpm != null || d.rightRpm != null)
+  const viewMode = chosenView ?? (rpmOnly ? 'rpm' : 'flowrate')
+
   const leftKey = viewMode === 'flowrate' ? 'leftFlow' as const : 'leftRpm' as const
   const rightKey = viewMode === 'flowrate' ? 'rightFlow' as const : 'rightRpm' as const
 
+  const storedPump = frzHealth ? null : recentPumpReading(flowQuery.data?.at(-1), flowQuery.dataUpdatedAt)
   const live = frzHealth
     ? viewMode === 'flowrate'
       ? {
@@ -86,7 +93,9 @@ export function FlowrateChart() {
           right: frzHealth.right.flowrate !== null ? frzHealth.right.flowrate.toFixed(2) : '--',
         }
       : { left: frzHealth.left.pumpRpm.toLocaleString(), right: frzHealth.right.pumpRpm.toLocaleString() }
-    : { left: '--', right: '--' }
+    : viewMode === 'rpm' && storedPump
+      ? { left: storedPump.left?.toLocaleString() ?? '--', right: storedPump.right?.toLocaleString() ?? '--' }
+      : { left: '--', right: '--' }
   const unitLabel = viewMode === 'flowrate' ? 'flow' : 'rpm'
 
   return (
@@ -124,19 +133,21 @@ export function FlowrateChart() {
         ? <Skeleton className="h-14" />
         : flowQuery.isError
           ? <InlineError>Failed to load flow data</InlineError>
-          : chartData.length < 2
-            ? <p className="text-xs text-fg-3">No flow history</p>
-            : (
-                <LineChart
-                  height={56}
-                  series={[
-                    { data: chartData.map(d => d[leftKey] ?? Number.NaN), color: 'var(--accent-cool)', width: 1.5 },
-                    { data: chartData.map(d => d[rightKey] ?? Number.NaN), color: 'var(--accent-warm)', width: 1.5 },
-                  ]}
-                  xLabel={i => formatClock(new Date(chartData[i].time), timeFormat, { hour: 'numeric', minute: '2-digit' })}
-                  format={v => (viewMode === 'flowrate' ? v.toFixed(2) : Math.round(v).toLocaleString())}
-                />
-              )}
+          : viewMode === 'flowrate' && rpmOnly
+            ? <p className="text-xs text-fg-3">This firmware does not report flow rate</p>
+            : chartData.length < 2
+              ? <p className="text-xs text-fg-3">No flow history</p>
+              : (
+                  <LineChart
+                    height={56}
+                    series={[
+                      { data: chartData.map(d => d[leftKey] ?? Number.NaN), color: 'var(--accent-cool)', width: 1.5 },
+                      { data: chartData.map(d => d[rightKey] ?? Number.NaN), color: 'var(--accent-warm)', width: 1.5 },
+                    ]}
+                    xLabel={i => formatClock(new Date(chartData[i].time), timeFormat, { hour: 'numeric', minute: '2-digit' })}
+                    format={v => (viewMode === 'flowrate' ? v.toFixed(2) : Math.round(v).toLocaleString())}
+                  />
+                )}
     </Card>
   )
 }

@@ -5,6 +5,7 @@ import { bedTemp, freezerTemp, flowReadings } from '@/src/db/biometrics-schema'
 import { shouldBlock as pumpStallShouldBlock } from '@/src/hardware/pumpStallGuard'
 import { getDacMonitorIfRunning } from '@/src/hardware/dacMonitor.instance'
 import { PodVersion } from '@/src/hardware/types'
+import { FLOW_SOURCE_LOG, recentPumpReading } from '@/src/lib/pumpLog'
 import { centiDegreesToF } from '@/src/lib/tempUtils'
 
 /** Telemetry proves support; otherwise distinguish known models from startup uncertainty. */
@@ -44,12 +45,15 @@ export function readThermalTruth() {
     .limit(1)
     .all()
 
-  const [flow] = biometricsDb
+  const [latestReading] = biometricsDb
     .select()
     .from(flowReadings)
     .orderBy(desc(flowReadings.timestamp))
     .limit(1)
     .all()
+  // Logged samples can show a pump running, but they are minutes apart, so
+  // they stay out of everything below that judges a reading's freshness.
+  const flow = latestReading?.source === FLOW_SOURCE_LOG ? undefined : latestReading
 
   const [water] = biometricsDb
     .select()
@@ -67,12 +71,14 @@ export function readThermalTruth() {
 
   const pumpSpeedSupport = reportsPumpSpeed(flow != null)
   const now = Date.now()
+  const logged = latestReading?.source === FLOW_SOURCE_LOG ? recentPumpReading(latestReading, now) : null
   const flowAgeSec = flow?.timestamp ? Math.round((now - flow.timestamp.getTime()) / 1000) : null
+  const readingAgeSec = logged ? Math.round(logged.ageMs / 1000) : flowAgeSec
 
   const sides = (['left', 'right'] as const).map((side) => {
     const [ds] = db.select().from(deviceState).where(eq(deviceState.side, side)).limit(1).all()
 
-    const pumpRpm = side === 'left' ? (flow?.leftPumpRpm ?? null) : (flow?.rightPumpRpm ?? null)
+    const pumpRpm = (flow ? (side === 'left' ? flow.leftPumpRpm : flow.rightPumpRpm) : logged?.[side]) ?? null
     const flowrate = side === 'left' ? (flow?.leftFlowrateCd ?? null) : (flow?.rightFlowrateCd ?? null)
     const waterCd = side === 'left' ? (water?.leftWaterTemp ?? null) : (water?.rightWaterTemp ?? null)
     const bedCd = side === 'left' ? (bed?.leftCenterTemp ?? null) : (bed?.rightCenterTemp ?? null)
@@ -88,16 +94,21 @@ export function readThermalTruth() {
     const current = isPowered ? (ds?.currentTemperature ?? null) : null
     const stale = flowAgeSec != null && flowAgeSec > STALE_SEC
     const flowing = pumpRpm != null && pumpRpm >= MIN_FLOW_RPM && !stale
+    const offTarget = target != null && current != null && Math.abs(target - current) > AT_TARGET_F
 
     let verdict: ThermalVerdict
     let note: string | null = null
     if (!isPowered) {
       verdict = 'off'
     }
+    else if (!flow && logged && flowing) {
+      verdict = offTarget ? 'delivering' : 'holding'
+    }
     else if (!flow) {
+      // A logged zero may predate power-on, so it is never evidence of a stall.
       verdict = 'unknown'
       note = pumpSpeedSupport === false
-        ? 'this pod does not report pump speed — water temperature tracking the target is the sign it is circulating'
+        ? 'this firmware only logs pump speed every few minutes — until the next reading, water temperature tracking the target is the sign it is circulating'
         : 'waiting for the first pump-speed reading — circulation is not yet verified'
     }
     else if (!flowing) {
@@ -106,7 +117,7 @@ export function readThermalTruth() {
         ? `powered but no fresh pump reading for ${flowAgeSec}s — pump likely not circulating; TEC locks at zero flow`
         : 'powered but pump below flow threshold — TEC is locked, bed will drift to ambient'
     }
-    else if (target != null && current != null && Math.abs(target - current) > AT_TARGET_F) {
+    else if (offTarget) {
       verdict = 'delivering'
     }
     else {
@@ -122,7 +133,7 @@ export function readThermalTruth() {
       poweredOnAt: ds?.poweredOnAt ? ds.poweredOnAt.toISOString() : null,
       pumpRpm,
       flowrate,
-      readingAgeSec: flowAgeSec,
+      readingAgeSec,
       waterTempF: waterCd != null ? Math.round(centiDegreesToF(waterCd) * 10) / 10 : null,
       bedSurfaceTempF: bedCd != null ? Math.round(centiDegreesToF(bedCd) * 10) / 10 : null,
       guardBlocked: pumpStallShouldBlock(side),
@@ -133,8 +144,9 @@ export function readThermalTruth() {
 
   return {
     pumpStallProtectionEnabled: settings?.enabled ?? false,
-    // Pod 3/4 firmware sends no pump speed, so the stall guard has nothing to
-    // act on there and its being off isn't worth flagging.
+    // Pod 3/4 firmware streams no pump speed (it only logs samples), so the
+    // stall guard has nothing to act on there and its being off isn't worth
+    // flagging.
     reportsPumpSpeed: pumpSpeedSupport,
     heatsinkTempF: water?.heatsinkTemp != null ? Math.round(centiDegreesToF(water.heatsinkTemp) * 10) / 10 : null,
     ambientTempF: water?.ambientTemp != null ? Math.round(centiDegreesToF(water.ambientTemp) * 10) / 10 : null,

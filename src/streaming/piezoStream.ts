@@ -409,11 +409,11 @@ const ALL_SENSOR_TYPES = [
 
 /**
  * Frame types consumed only in-process (onServerFrame), not a client
- * subscription type: frzHealth feeds flow data; tap-gesture ({side, taps,
- * ts}, one per tap, including taps that stop an alarm) feeds the gesture
- * handler.
+ * subscription type: frzHealth feeds flow data; log carries pump speed on
+ * firmware without frzHealth; tap-gesture ({side, taps, ts}, one per tap,
+ * including taps that stop an alarm) feeds the gesture handler.
  */
-const SERVER_LISTENER_TYPES: ReadonlySet<string> = new Set(['frzHealth', 'tap-gesture'])
+const SERVER_LISTENER_TYPES: ReadonlySet<string> = new Set(['frzHealth', 'log', 'tap-gesture'])
 
 /** Valid sensor type string. Used for subscription filtering. */
 type SensorType = typeof ALL_SENSOR_TYPES[number]
