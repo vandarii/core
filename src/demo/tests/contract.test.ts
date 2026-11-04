@@ -202,6 +202,7 @@ describe('demo handlers honour the real router contracts', () => {
       await call('system.setInternetAccess', { blocked: false })
       await call('system.freeStorage')
       await call('system.triggerUpdate')
+      await call('system.restartApp')
       await call('health.restartService', { unit: 'sleepypod-piezo-processor.service' })
       await call('databases.checkIntegrity')
       await call('calibration.triggerCalibration', { side: 'left', sensorType: 'piezo' })

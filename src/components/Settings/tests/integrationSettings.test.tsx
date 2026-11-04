@@ -25,7 +25,7 @@ vi.mock('@/src/utils/trpc', () => {
     useUtils: () => ({ archivePush: { getConfig: { invalidate: mock.invalidate } }, homekit: { getStatus: { invalidate: mock.invalidate } }, settings: { getAll: { invalidate: mock.invalidate } } }),
     archivePush: { getConfig: endpoint('config'), setConfig: endpoint('save'), generateKey: endpoint('generate'), testConnection: endpoint('test') },
     homekit: { getStatus: endpoint('homekit'), setEnabled: endpoint('enable'), unpair: endpoint('unpair') },
-    settings: { updateDevice: endpoint('device') }, system: { triggerUpdate: endpoint('restart') },
+    settings: { updateDevice: endpoint('device') }, system: { restartApp: endpoint('restart') },
   } }
 })
 beforeEach(() => {

@@ -32,7 +32,7 @@ wan_is_blocked() { [ "$TEST_WAN_BLOCKED" = 1 ]; }
 unblock_wan() { echo unblock >> "$TEST_LOG"; }
 restore_wan() { echo restore >> "$TEST_LOG"; }
 `
-function updater(options: { invalid?: boolean, noAsset?: boolean, archive?: boolean, status?: string, blocked?: boolean, pnpmFail?: boolean, version?: string, downloadFail?: boolean, backupFail?: boolean, symlinkInstall?: boolean, lowTempSpace?: boolean, branch?: string, dnsFail?: boolean, realTelemetry?: boolean, controlLog?: boolean, stockUnits?: boolean, firmwareAllow?: boolean } = {}) {
+function updater(options: { invalid?: boolean, noAsset?: boolean, archive?: boolean, status?: string, blocked?: boolean, pnpmFail?: boolean, version?: string, downloadFail?: boolean, backupFail?: boolean, symlinkInstall?: boolean, lowTempSpace?: boolean, branch?: string, dnsFail?: boolean, realTelemetry?: boolean, controlLog?: boolean, stockUnits?: boolean, firmwareAllow?: boolean, stockGuard?: boolean } = {}) {
   const dir = temp()
   const app = join(dir, 'app')
   const bundle = join(dir, 'bundle')
@@ -152,7 +152,7 @@ exec '${tar}' "$@"
 `)
   const result = spawnSync('bash', [join(dir, 'update'), ...(options.archive ? ['--archive', archive] : [options.branch ?? 'fix/test'])], {
     encoding: 'utf8',
-    env: { ...testEnv, PATH: `${bin}:${process.env.PATH}`, TMPDIR: join(dir, 'stage'), TEST_LOG: log, SLEEPYPOD_ROOT: join(dir, 'root'),
+    env: { ...testEnv, ...(options.stockGuard ? {} : { SP_ALLOW_STOCK_UPDATE: '1' }), PATH: `${bin}:${process.env.PATH}`, TMPDIR: join(dir, 'stage'), TEST_LOG: log, SLEEPYPOD_ROOT: join(dir, 'root'),
       INTERNET_CONTROL_ROOT: join(dir, 'root'), VECTOR_DATA_DIR: join(dir, 'vector'),
       TEST_WAN_BLOCKED: options.blocked ? '1' : '0', TEST_PNPM_FAIL: options.pnpmFail ? '1' : '0',
       TEST_PNPM_VERSION: options.version ?? '10.34.5', TEST_DOWNLOAD_FAIL: options.downloadFail ? '1' : '0',
@@ -161,6 +161,21 @@ exec '${tar}' "$@"
   })
   return { result, app, dir, log: existsSync(log) ? readFileSync(log, 'utf8') : '' }
 }
+
+describe('sp-update on the fork', () => {
+  it('refuses a download before touching the network or services', () => {
+    const { result, log } = updater({ branch: 'main', stockGuard: true })
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('would replace it with stock sleepypod')
+    expect(log).not.toContain('curl')
+    expect(log).not.toContain('systemctl stop')
+  })
+
+  it('still installs a local build', () => {
+    const { result } = updater({ archive: true, stockGuard: true })
+    expect(result.status).toBe(0)
+  })
+})
 
 describe('sp-update staged deployment', () => {
   it('checks temporary storage before stopping the service or opening WAN', () => {

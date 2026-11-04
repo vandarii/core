@@ -52,6 +52,14 @@ case "${1:-}" in
     BRANCH="${1:-main}"
     ;;
 esac
+# This is the vandarii/core fork. A download would replace it with stock
+# sleepypod, so only local builds install unless a person on the Pod opts in.
+# sudo drops this variable, so the app's update endpoint can never set it.
+if [ -z "$ARCHIVE" ] && [ "${SP_ALLOW_STOCK_UPDATE:-}" != 1 ]; then
+  echo "Error: this Pod runs a custom sleepypod build, and downloading '$BRANCH' would replace it with stock sleepypod." >&2
+  echo "Deploy from your computer with ./scripts/deploy POD_IP, or as root run SP_ALLOW_STOCK_UPDATE=1 sp-update to install stock anyway." >&2
+  exit 1
+fi
 if [ ! -d "$INSTALL_DIR" ] || ! command -v systemctl >/dev/null; then
   echo "Error: sp-update runs on an installed Pod. On your computer use ./scripts/deploy POD_IP [branch]." >&2
   exit 1

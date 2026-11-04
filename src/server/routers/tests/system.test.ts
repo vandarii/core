@@ -63,6 +63,8 @@ vi.mock('node:child_process', () => ({
   default: { execFile: execMock.execFile, spawn: execMock.spawn },
 }))
 vi.mock('node:fs/promises', () => ({ ...fsPromisesMock, default: fsPromisesMock }))
+const forkMock = vi.hoisted(() => ({ STOCK_UPDATES_BLOCKED: false, STOCK_UPDATES_BLOCKED_MESSAGE: 'custom build' }))
+vi.mock('@/src/lib/forkBuild', () => forkMock)
 vi.mock('node:fs', () => ({ ...fsSyncMock, default: fsSyncMock }))
 
 const { systemRouter, getFirmwareSignals, _resetFirmwareSignalsForTest } = await import('@/src/server/routers/system')
@@ -339,6 +341,38 @@ describe('system.wifiStatus', () => {
       ssid: 'Trailing\\',
       signal: null,
     })
+  })
+})
+
+describe('system.restartApp', () => {
+  it('sends SIGTERM to itself after replying and never runs sp-update', async () => {
+    vi.useFakeTimers()
+    const kill = vi.spyOn(process, 'kill').mockReturnValue(true)
+    try {
+      await expect(caller.restartApp({})).resolves.toEqual({ restarting: true })
+      expect(kill).not.toHaveBeenCalled()
+      vi.advanceTimersByTime(500)
+      expect(kill).toHaveBeenCalledWith(process.pid, 'SIGTERM')
+      expect(execMock.spawn).not.toHaveBeenCalled()
+    }
+    finally {
+      kill.mockRestore()
+      vi.useRealTimers()
+    }
+  })
+})
+
+describe('system.triggerUpdate on the fork', () => {
+  it('refuses every branch without starting sp-update', async () => {
+    forkMock.STOCK_UPDATES_BLOCKED = true
+    try {
+      await expect(caller.triggerUpdate({})).rejects.toMatchObject({ code: 'PRECONDITION_FAILED', message: 'custom build' })
+      await expect(caller.triggerUpdate({ branch: 'dev' })).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
+      expect(execMock.spawn).not.toHaveBeenCalled()
+    }
+    finally {
+      forkMock.STOCK_UPDATES_BLOCKED = false
+    }
   })
 })
 

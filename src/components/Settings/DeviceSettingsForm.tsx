@@ -129,7 +129,7 @@ export function DeviceSettingsForm({ device }: { device: DeviceSettings }) {
     if (savedTimer.current) clearTimeout(savedTimer.current)
   }, [])
 
-  const rebootMutation = trpc.system.triggerUpdate.useMutation()
+  const restartMutation = trpc.system.restartApp.useMutation()
 
   const isPending = mutation.isPending
 
@@ -300,7 +300,7 @@ export function DeviceSettingsForm({ device }: { device: DeviceSettings }) {
 
   function handleRestart() {
     if (confirm('Restart the sleepypod service? The pod will be briefly unavailable.')) {
-      rebootMutation.mutate({})
+      restartMutation.mutate({})
     }
   }
 
@@ -450,14 +450,14 @@ export function DeviceSettingsForm({ device }: { device: DeviceSettings }) {
         <Button icon={Wifi} onClick={() => window.location.reload()}>
           Reconnect
         </Button>
-        <Button variant="danger" icon={RotateCcw} onClick={handleRestart} disabled={rebootMutation.isPending}>
-          {rebootMutation.isPending ? 'Restarting…' : 'Restart service'}
+        <Button variant="danger" icon={RotateCcw} onClick={handleRestart} disabled={restartMutation.isPending}>
+          {restartMutation.isPending ? 'Restarting…' : 'Restart service'}
         </Button>
       </div>
-      {rebootMutation.isSuccess && (
+      {restartMutation.isSuccess && (
         <p className="text-xs text-ok">Service restarting — reconnecting…</p>
       )}
-      {rebootMutation.error && <InlineError>{rebootMutation.error.message}</InlineError>}
+      {restartMutation.error && <InlineError>{restartMutation.error.message}</InlineError>}
     </>
   )
 

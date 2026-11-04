@@ -19,6 +19,7 @@ import {
 import { getServerPerformance } from '@/src/lib/serverPerformance'
 import { getSensorFrameTimes } from '@/src/streaming/piezoStream'
 import { isWanBlocked, setInternetAccess } from '@/src/hardware/internetAccess'
+import { STOCK_UPDATES_BLOCKED, STOCK_UPDATES_BLOCKED_MESSAGE } from '@/src/lib/forkBuild'
 
 const execFileAsync = promisify(execFile)
 
@@ -155,6 +156,7 @@ async function archiveSize(path: string): Promise<{ usedBytes: number, fileCount
  * - `internetStatus`     — check if WAN is blocked
  * - `setInternetAccess`  — toggle WAN block on/off
  * - `triggerUpdate`       — kick off sp-update (or a deploy-driven install)
+ * - `restartApp`          — restart this service without changing the installed build
  */
 const flashWindow = z.object({ hours: z.number(), coveredHours: z.number(), bytes: z.number(), bytesPerDay: z.number().nullable() })
 
@@ -275,6 +277,10 @@ export const systemRouter = router({
       message: z.string(),
     }))
     .mutation(async ({ input }) => {
+      if (STOCK_UPDATES_BLOCKED) {
+        throw new TRPCError({ code: 'PRECONDITION_FAILED', message: STOCK_UPDATES_BLOCKED_MESSAGE })
+      }
+
       const branch = input?.branch ?? 'main'
 
       try {
@@ -312,6 +318,20 @@ export const systemRouter = router({
           cause: error,
         })
       }
+    }),
+
+  /**
+   * Restart this service without touching the installed build. SIGTERM runs
+   * the normal graceful shutdown and Restart=always in sleepypod.service brings
+   * it back, so no sudo rule is needed. The delay lets this response go out.
+   */
+  restartApp: publicProcedure
+    .meta({ openapi: { method: 'POST', path: '/system/restart', protect: false, tags: ['System'] } })
+    .input(z.object({}))
+    .output(z.object({ restarting: z.boolean() }))
+    .mutation(() => {
+      setTimeout(() => process.kill(process.pid, 'SIGTERM'), 500)
+      return { restarting: true }
     }),
 
   /**

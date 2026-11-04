@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { trpc } from '@/src/utils/trpc'
 import { Download, Globe, RefreshCw } from 'lucide-react'
 import { Alert, Button, Card, CardHeader, KeyValue, SegmentedControl, SettingRow, Skeleton, StatusDot } from '@/src/components/ds'
+import { STOCK_UPDATES_BLOCKED, STOCK_UPDATES_BLOCKED_MESSAGE } from '@/src/lib/forkBuild'
 
 type Channel = 'main' | 'dev'
 
@@ -275,6 +276,7 @@ export function UpdateCard({ compact = false }: { compact?: boolean } = {}) {
 
   const prompts = (
     <>
+      {STOCK_UPDATES_BLOCKED && <p className="text-[13px] text-fg-2">{STOCK_UPDATES_BLOCKED_MESSAGE}</p>}
       {errorMessage && <Alert tone="danger">{errorMessage}</Alert>}
 
       {/* Branch picker for non-standard branches */}
@@ -326,7 +328,7 @@ export function UpdateCard({ compact = false }: { compact?: boolean } = {}) {
     </>
   )
 
-  const actions = (updateState === 'idle' || updateState === 'confirming' || updateState === 'error' || updateState === 'internet-prompt') && (
+  const actions = !STOCK_UPDATES_BLOCKED && (updateState === 'idle' || updateState === 'confirming' || updateState === 'error' || updateState === 'internet-prompt') && (
     <div className="flex flex-wrap gap-2.5">
       {updateState === 'internet-prompt'
         ? (
@@ -394,14 +396,16 @@ export function UpdateCard({ compact = false }: { compact?: boolean } = {}) {
               />
             </div>
           )}
-      <SettingRow label="Update channel">
-        <SegmentedControl
-          ariaLabel="Update channel"
-          value={channel ?? ('' as Channel)}
-          options={['main', 'dev'] as const}
-          onChange={handleChannel}
-        />
-      </SettingRow>
+      {!STOCK_UPDATES_BLOCKED && (
+        <SettingRow label="Update channel">
+          <SegmentedControl
+            ariaLabel="Update channel"
+            value={channel ?? ('' as Channel)}
+            options={['main', 'dev'] as const}
+            onChange={handleChannel}
+          />
+        </SettingRow>
+      )}
       {prompts}
       {actions}
     </Card>

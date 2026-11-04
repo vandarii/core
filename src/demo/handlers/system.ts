@@ -130,6 +130,8 @@ export const system: DemoHandlers<'system'> = {
     return { triggered: true, branch, message: `Update to ${branch} started (demo — nothing is installed)` }
   },
 
+  restartApp: () => ({ restarting: true }),
+
   getLogSources: () => ({ sources: LOG_SOURCES.map(s => ({ ...s, active: true })) }),
 
   getLogs: (input) => {
